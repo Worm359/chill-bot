@@ -11,6 +11,5 @@ public class ChillBotApplication {
     public static void main(String[] args) {
         SpringApplication app = new SpringApplication(ChillBotApplication.class);
         app.run(args);
-        log.info("Hello world!");
     }
 }
