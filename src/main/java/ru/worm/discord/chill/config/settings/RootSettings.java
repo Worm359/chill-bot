@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 @PropertySource("file:${spring.config.location}/application.properties")
 @ConfigurationProperties("chill-bot")
-public class ChillBotSettings {
+public class RootSettings {
     DiscordSetting discord;
 
     public DiscordSetting getDiscord() {
