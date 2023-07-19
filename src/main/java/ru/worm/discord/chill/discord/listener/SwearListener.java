@@ -7,8 +7,8 @@ import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.discord.Consts;
 
 @Service
-public class SwearListenerListener extends MessageListener implements EventListener<MessageCreateEvent> {
-    public SwearListenerListener() {
+public class SwearListener extends MessageListener implements EventListener<MessageCreateEvent> {
+    public SwearListener() {
         this.command = Consts.TODO;
     }
 

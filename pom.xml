@@ -16,6 +16,7 @@
         <!--versions-->
         <ru.worm.discord.dependency.version.discord4j>3.2.3</ru.worm.discord.dependency.version.discord4j>
         <ru.worm.discord.dependency.version.spring>2.6.3</ru.worm.discord.dependency.version.spring>
+        <ru.worm.discord.dependency.version.lavaplayer>1.3.78</ru.worm.discord.dependency.version.lavaplayer>
     </properties>
 
     <dependencies>
@@ -27,6 +28,14 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+        <!--youtube-dl + ffmpeg was the "traditional" way of doing it-->
+        <!--удалось найти рабочую версию по url:-->
+        <!--m2.dv8tion.net/releases/com/sedmelluq/lavaplayer/maven-metadata.xml-->
+        <dependency>
+            <groupId>com.sedmelluq</groupId>
+            <artifactId>lavaplayer</artifactId>
+            <version>${ru.worm.discord.dependency.version.lavaplayer}</version>
         </dependency>
     </dependencies>
     <dependencyManagement>
@@ -40,6 +49,14 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <repositories>
+        <repository>
+            <id>dv8tion</id>
+            <name>m2-dv8tion</name>
+            <url>https://m2.dv8tion.net/releases</url>
+        </repository>
+    </repositories>
 
     <build>
         <resources>
