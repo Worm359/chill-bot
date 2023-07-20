@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.discord.Consts;
 
+import java.time.Duration;
+
 @Service
 public class JoinListener extends MessageListener implements EventListener<MessageCreateEvent> {
     private final AudioProvider lavaAudioProvider;
@@ -32,7 +34,7 @@ public class JoinListener extends MessageListener implements EventListener<Messa
                 .flatMap(VoiceState::getChannel)
                 // join returns a VoiceConnection which would be required if we were
                 // adding disconnection features, but for now we are just ignoring it.
-                .flatMap(channel -> channel.join(spec -> spec.setProvider(lavaAudioProvider)))
+                .flatMap(channel -> channel.join(spec -> spec.setProvider(lavaAudioProvider).setTimeout(Duration.ofMinutes(1L))))
                 .then();
     }
 }

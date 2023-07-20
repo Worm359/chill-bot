@@ -6,15 +6,19 @@ import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
 import com.sedmelluq.discord.lavaplayer.track.playback.NonAllocatingAudioFrameBuffer;
 import discord4j.voice.AudioProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import ru.worm.discord.chill.lavaplayer.LavaPlayerAudioProvider;
 
 @Configuration
 public class LavaPlayerConfig {
+
+    /**
+     * lavaplayer
+     */
     @Bean
-    public AudioProvider dosmt() {
-        // Creates AudioPlayer instances and translates URLs to AudioTrack instances
+    public AudioPlayerManager playerManager() {
         final AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
 
         // This is an optimization strategy that Discord4J can utilize.
@@ -24,11 +28,25 @@ public class LavaPlayerConfig {
 
         // Allow playerManager to parse remote sources like YouTube links
         AudioSourceManagers.registerRemoteSources(playerManager);
+        return playerManager;
+    }
 
+    /**
+     * lavaplayer
+     */
+    @Autowired
+    @Bean
+    public AudioPlayer lavaPlayer(AudioPlayerManager playerManager) {
         // Create an AudioPlayer so Discord4J can receive audio data
-        final AudioPlayer player = playerManager.createPlayer();
+        return playerManager.createPlayer();
+    }
 
-        // We will be creating LavaPlayerAudioProvider in the next step
-        return new LavaPlayerAudioProvider(player);
+    /**
+     * our type - link between discord4j and lavaplayer
+     */
+    @Autowired
+    @Bean("lavaAudioProvider")
+    public AudioProvider audioProvider(AudioPlayer lavaPlayer) {
+        return new LavaPlayerAudioProvider(lavaPlayer);
     }
 }

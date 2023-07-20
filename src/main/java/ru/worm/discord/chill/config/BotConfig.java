@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import ru.worm.discord.chill.config.settings.RootSettings;
 import ru.worm.discord.chill.util.ExceptionUtils;
 
@@ -23,6 +24,7 @@ public class BotConfig {
     }
 
     @Bean
+    @DependsOn({"lavaAudioProvider"})
     public GatewayDiscordClient gatewayDiscordClient() {
         GatewayDiscordClient discord = null;
         try {
