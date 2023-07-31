@@ -9,15 +9,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.discord.Consts;
+import ru.worm.discord.chill.ffmpeg.FfmpegAudioProvider;
 
 import java.time.Duration;
 
 @Service
 public class JoinListener extends MessageListener implements EventListener<MessageCreateEvent> {
     private final AudioProvider lavaAudioProvider;
+    private final FfmpegAudioProvider ffmpegAudioProvider;
 
     @Autowired
-    public JoinListener(AudioProvider lavaAudioProvider) {
+    public JoinListener(AudioProvider lavaAudioProvider, FfmpegAudioProvider ffmpegAudioProvider) {
+        this.ffmpegAudioProvider = ffmpegAudioProvider;
         this.command = Consts.JOIN;
         this.lavaAudioProvider = lavaAudioProvider;
     }
@@ -37,7 +40,7 @@ public class JoinListener extends MessageListener implements EventListener<Messa
                 // adding disconnection features, but for now we are just ignoring it.
                 // с такими таймаутами видно что падает из-за неудавшегося UDP соединения
                 .flatMap(channel -> channel.join(VoiceChannelJoinSpec.builder()
-                        .provider(lavaAudioProvider)
+                        .provider(ffmpegAudioProvider)
                         .timeout(Duration.ofMinutes(1L))
                         .ipDiscoveryTimeout(Duration.ofSeconds(30))
                         .build()))
