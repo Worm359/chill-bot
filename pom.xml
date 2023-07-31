@@ -14,7 +14,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!--versions-->
-        <ru.worm.discord.dependency.version.discord4j>3.2.3</ru.worm.discord.dependency.version.discord4j>
+        <ru.worm.discord.dependency.version.discord4j>3.2.4</ru.worm.discord.dependency.version.discord4j>
         <ru.worm.discord.dependency.version.spring>2.6.3</ru.worm.discord.dependency.version.spring>
         <ru.worm.discord.dependency.version.lavaplayer>1.3.78</ru.worm.discord.dependency.version.lavaplayer>
     </properties>

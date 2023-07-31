@@ -40,9 +40,9 @@ public class JoinListener extends MessageListener implements EventListener<Messa
                 // adding disconnection features, but for now we are just ignoring it.
                 // с такими таймаутами видно что падает из-за неудавшегося UDP соединения
                 .flatMap(channel -> channel.join(VoiceChannelJoinSpec.builder()
-                        .provider(ffmpegAudioProvider)
+                        .provider(lavaAudioProvider)
                         .timeout(Duration.ofMinutes(1L))
-                        .ipDiscoveryTimeout(Duration.ofSeconds(30))
+                        .ipDiscoveryTimeout(Duration.ofSeconds(10))
                         .build()))
                 .then();
     }
