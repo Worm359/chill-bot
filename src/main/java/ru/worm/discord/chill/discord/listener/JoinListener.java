@@ -3,6 +3,7 @@ package ru.worm.discord.chill.discord.listener;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.VoiceState;
 import discord4j.core.object.entity.Member;
+import discord4j.core.spec.VoiceChannelJoinSpec;
 import discord4j.voice.AudioProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,7 +35,12 @@ public class JoinListener extends MessageListener implements EventListener<Messa
                 .flatMap(VoiceState::getChannel)
                 // join returns a VoiceConnection which would be required if we were
                 // adding disconnection features, but for now we are just ignoring it.
-                .flatMap(channel -> channel.join(spec -> spec.setProvider(lavaAudioProvider).setTimeout(Duration.ofMinutes(1L))))
+                // с такими таймаутами видно что падает из-за неудавшегося UDP соединения
+                .flatMap(channel -> channel.join(VoiceChannelJoinSpec.builder()
+                        .provider(lavaAudioProvider)
+                        .timeout(Duration.ofMinutes(1L))
+                        .ipDiscoveryTimeout(Duration.ofSeconds(30))
+                        .build()))
                 .then();
     }
 }
