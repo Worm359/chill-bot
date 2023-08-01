@@ -8,6 +8,8 @@ import java.io.IOException;
 /**
  * Тестовый метод для преобразования mp3 файлов в opus формат, требуемый discord4j.voice.AudioProvider
  * <a href="https://stackoverflow.com/questions/38185598/how-to-convert-an-mp3-file-to-an-ogg-opus-file">stackoverflow</a>
+ * ffmpeg.exe -i osip.mp3 -c:a opus -b:a 48000 -opus_delay:a 20 -strict -2 opus_lib.opus
+ * ffmpeg.exe -i osip.mp3 -c:a libopus -b:a 48000 -vbr off -frame_duration 20 libopus_lib.opus
  */
 public class FFmpegConvertForTesting {
     public static void main(String[] args) throws IOException, InterruptedException {
@@ -17,7 +19,7 @@ public class FFmpegConvertForTesting {
         //пример для конвертации в формат opus
         //-i input.mp3 -c:a libopus output.opus
         //ProcessBuilder pb = new ProcessBuilder(ffmpeg, "-i", "pupushka.mp3", "-c:a", "libopus", "output.opus");
-        ProcessBuilder pb = new ProcessBuilder(ffmpeg, "-i", "pupushka.mp3", "-c:a", "libopus", "-b:48000", "-frame_duration 20", "output2.opus");
+        ProcessBuilder pb = new ProcessBuilder(ffmpeg, "-i", "osip.mp3", "-c:a", "libopus", "-b:a 48000", "-vbr off", "-frame_duration 20", "libopus_lib.opus");
         pb.inheritIO().start().waitFor();
     }
 }
