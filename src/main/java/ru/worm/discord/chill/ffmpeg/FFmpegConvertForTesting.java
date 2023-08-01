@@ -7,6 +7,7 @@ import java.io.IOException;
 
 /**
  * Тестовый метод для преобразования mp3 файлов в opus формат, требуемый discord4j.voice.AudioProvider
+ * <a href="https://stackoverflow.com/questions/38185598/how-to-convert-an-mp3-file-to-an-ogg-opus-file">stackoverflow</a>
  */
 public class FFmpegConvertForTesting {
     public static void main(String[] args) throws IOException, InterruptedException {
