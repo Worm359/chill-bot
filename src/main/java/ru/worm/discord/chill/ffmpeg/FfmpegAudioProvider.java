@@ -1,6 +1,7 @@
 package ru.worm.discord.chill.ffmpeg;
 
 import discord4j.voice.AudioProvider;
+import discord4j.voice.Opus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -30,7 +31,10 @@ public class FfmpegAudioProvider extends AudioProvider {
     }
 
     public FfmpegAudioProvider() {
-        super();
+//        super();
+//        super(ByteBuffer.allocate(StandardAudioDataFormats.DISCORD_OPUS.maximumChunkSize()));
+        super(ByteBuffer.allocate(Opus.FRAME_SIZE));
+//        super(ByteBuffer.allocate(240));
     }
 
     private int position = 0;
@@ -39,18 +43,20 @@ public class FfmpegAudioProvider extends AudioProvider {
     public boolean provide() {
         ByteBuffer buffer = getBuffer();
         //разница между размером буффера и его заполненностью (пишем до полного буфера)
+        log.debug("buffer limit {} position {}", buffer.limit(), buffer.position());
         int providedAudioBytes = buffer.limit() - buffer.position();
         //из считанной Mp3 фозможно осталось меньше байтов
         providedAudioBytes = Math.min(providedAudioBytes, tempOpusBytes.length - position);
         //передавать нечего - либо буфер не почищен, либо все уже отдали
         if (providedAudioBytes <= 0) {
-            log.debug("remainedSpaceInBuffer is {}, limit {}, position {}",
+            log.debug("providing {} bytes to buffer, limit {}, position {}",
                     providedAudioBytes, buffer.limit(), buffer.position());
             return false;
         }
-        log.debug("remaindedSpaceInBuffer is {}", providedAudioBytes);
+        log.debug("providing {} bytes to buffer", providedAudioBytes);
         buffer.put(tempOpusBytes, position, providedAudioBytes);
         position += providedAudioBytes;
+        buffer.flip();
         return true;
     }
 }
