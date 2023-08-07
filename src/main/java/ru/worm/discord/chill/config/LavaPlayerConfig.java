@@ -28,6 +28,7 @@ public class LavaPlayerConfig {
 
         // Allow playerManager to parse remote sources like YouTube links
         AudioSourceManagers.registerRemoteSources(playerManager);
+        AudioSourceManagers.registerLocalSource(playerManager);
         return playerManager;
     }
 
