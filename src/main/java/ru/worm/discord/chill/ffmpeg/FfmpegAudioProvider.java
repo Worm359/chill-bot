@@ -4,7 +4,6 @@ import discord4j.voice.AudioProvider;
 import discord4j.voice.Opus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import ru.worm.discord.chill.util.ExceptionUtils;
 
 import java.io.IOException;
@@ -13,32 +12,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-@Component
+//@Component
 public class FfmpegAudioProvider extends AudioProvider {
     Logger log = LoggerFactory.getLogger(getClass());
-    private final static byte[] tempOpusBytes;
-    static {
-        Path opusFile = Paths.get("").toAbsolutePath().getParent().resolve("output.opus");
-        byte[] temp;
-        try {
-            temp = Files.readAllBytes(opusFile);
-        } catch (IOException e) {
-            System.out.println("ERROR: couldn't extract file " + opusFile.toAbsolutePath());
-            System.out.println(ExceptionUtils.getStackTrace(e));
-            temp = new byte[0];
-        }
-        tempOpusBytes = temp;
-    }
+    private final static byte[] tempOpusBytes; //OPUS file, which is read from disk
 
     public FfmpegAudioProvider() {
-//        super();
-//        super(ByteBuffer.allocate(StandardAudioDataFormats.DISCORD_OPUS.maximumChunkSize()));
+        //various tries to pick up the right ByteBuffer size...
+        //super();
+        //super(ByteBuffer.allocate(StandardAudioDataFormats.DISCORD_OPUS.maximumChunkSize()));
+        //super(ByteBuffer.allocate(StandardAudioDataFormats.DISCORD_OPUS.maximumChunkSize()));
+        //super(ByteBuffer.allocate(240));
         super(ByteBuffer.allocate(Opus.FRAME_SIZE));
-//        super(ByteBuffer.allocate(240));
     }
 
-    private int position = 0;
-
+    private int position = 0; //position of read byte from OPUS file
     @Override
     public boolean provide() {
         ByteBuffer buffer = getBuffer();
@@ -58,5 +46,18 @@ public class FfmpegAudioProvider extends AudioProvider {
         position += providedAudioBytes;
         buffer.flip();
         return true;
+    }
+
+    static {
+        Path opusFile = Paths.get("").toAbsolutePath().getParent().resolve("off_minimal.opus");
+        byte[] temp;
+        try {
+            temp = Files.readAllBytes(opusFile);
+        } catch (IOException e) {
+            System.out.println("ERROR: couldn't extract file " + opusFile.toAbsolutePath());
+            System.out.println(ExceptionUtils.getStackTrace(e));
+            temp = new byte[0];
+        }
+        tempOpusBytes = temp;
     }
 }

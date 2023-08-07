@@ -16,12 +16,12 @@ import java.time.Duration;
 @Service
 public class JoinListener extends MessageListener implements EventListener<MessageCreateEvent> {
     private final AudioProvider lavaAudioProvider;
-    private final AudioProvider ffmpegAudioProvider;
 
+    /**
+     * реализовать AudioProvider самому не получилось, см. ru.worm.discord.chill.ffmpeg.FfmpegAudioProvider
+     */
     @Autowired
-    public JoinListener(@Qualifier("lavaAudioProvider") AudioProvider lavaAudioProvider,
-                        @Qualifier("ffmpegAudioProvider") AudioProvider ffmpegAudioProvider) {
-        this.ffmpegAudioProvider = ffmpegAudioProvider;
+    public JoinListener(@Qualifier("lavaAudioProvider") AudioProvider lavaAudioProvider) {
         this.command = Consts.JOIN;
         this.lavaAudioProvider = lavaAudioProvider;
     }
@@ -41,7 +41,7 @@ public class JoinListener extends MessageListener implements EventListener<Messa
                 // adding disconnection features, but for now we are just ignoring it.
                 // с такими таймаутами видно что падает из-за неудавшегося UDP соединения
                 .flatMap(channel -> channel.join(VoiceChannelJoinSpec.builder()
-                        .provider(ffmpegAudioProvider)
+                        .provider(lavaAudioProvider)
                         .selfDeaf(false)
                         .selfMute(false)
                         .timeout(Duration.ofMinutes(1L))
