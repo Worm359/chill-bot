@@ -41,24 +41,33 @@ public class PlayFileListener extends MessageListener implements EventListener<M
                 .map(m -> event)
                 .flatMap(e -> Mono.justOrEmpty(e.getMessage().getContent()))
                 .map(content -> Arrays.asList(content.split(" ")))
-                .doOnNext(command -> scheduler.trackLoaded(getMp3Track()))
+                .doOnNext(command -> scheduler.trackLoaded(getOggTrack()))
                 .then();
     }
 
     private static Path path() {
-        return Paths.get("").toAbsolutePath().getParent().resolve("osip.mp3");
+        return Paths.get("").toAbsolutePath().getParent().resolve("osip.opus");
     }
 
     private static OggAudioTrack getOggTrack() {
-        String pathToFileAsUri = path().toUri().toString();
-        AudioTrackInfo trackInfo = new AudioTrackInfo("unknown", "unknown", (long) 5, "identifier", false, pathToFileAsUri);
         NonSeekableInputStream nonSeekableIS = new NonSeekableInputStream(inputStreamFromFile());
+        AudioTrackInfo trackInfo = new AudioTrackInfo(
+                "unknown",
+                "unknown",
+                144000,
+                "identifier",
+                false,
+                path().toAbsolutePath().toString());
         return new OggAudioTrack(trackInfo, nonSeekableIS);
     }
 
     private static Mp3AudioTrack getMp3Track() {
-        String pathToFileAsUri = path().toUri().toString();
-        AudioTrackInfo trackInfo = new AudioTrackInfo("unknown", "unknown", (long) 5, "identifier", false, pathToFileAsUri);
+        AudioTrackInfo trackInfo = new AudioTrackInfo("unknown",
+                "unknown",
+                (long) 5,
+                "identifier",
+                false,
+                path().toUri().toString());
         NonSeekableInputStream nonSeekableIS = new NonSeekableInputStream(inputStreamFromFile());
         return new Mp3AudioTrack(trackInfo, nonSeekableIS);
     }
