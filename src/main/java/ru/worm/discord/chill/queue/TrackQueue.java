@@ -16,15 +16,15 @@ public class TrackQueue {
 
     public synchronized Optional<Track> nextFromPlaylist(boolean skipCurrent) {
         log.debug("next() event");
-        if (skipCurrent && queue.size() > 0 && current != null) {
+        if (skipCurrent && !queue.isEmpty() && current != null) {
             Track lastPlayed = queue.remove();
-            log.debug("current track is {}, skipping it", lastPlayed.getName());
+            log.debug("current track is {}, skipping it", lastPlayed.getUrl());
             history.addFirst(lastPlayed);
         }
-        if (queue.size() > 0) {
+        if (!queue.isEmpty()) {
             Track next = queue.getFirst();
             current = next;
-            log.debug("current track {}", next.getName());
+            log.debug("current track {}", next.getUrl());
             return Optional.of(next);
         } else {
             log.debug("no tracks left in queue");
