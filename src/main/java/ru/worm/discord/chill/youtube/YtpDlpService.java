@@ -24,7 +24,7 @@ public class YtpDlpService {
 
     public Mono<Void> loadAudio(String youtubeUrl) {
         return Mono.create(sink -> {
-            ProcessBuilder pb = new ProcessBuilder("yt-dlp.exe", "-x", "https://www.youtube.com/watch?v=W0PmSUd22Ng");
+            ProcessBuilder pb = new ProcessBuilder("yt-dlp.exe", "-x", "-o", "output", "--no-playlist", youtubeUrl);
             pb.inheritIO();
             try {
                 Process ytpDlp;

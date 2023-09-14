@@ -19,14 +19,14 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 
 /**
- * пример проигрывания файла с диска
+ * пример проигрывания файла с диска (hardcoded osip.opus в корне проекта)
  */
 @Service
-public class PlayFileListener extends MessageListener implements EventListener<MessageCreateEvent> {
+public class TestLocalOpusListener extends MessageListener implements EventListener<MessageCreateEvent> {
     private final TrackScheduler scheduler;
 
     @Autowired
-    public PlayFileListener(TrackScheduler scheduler) {
+    public TestLocalOpusListener(TrackScheduler scheduler) {
         this.scheduler = scheduler;
         this.command = Consts.PLAY_FROM_FILE;
     }

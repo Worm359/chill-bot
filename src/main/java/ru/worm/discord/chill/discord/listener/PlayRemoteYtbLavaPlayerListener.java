@@ -10,13 +10,16 @@ import ru.worm.discord.chill.lavaplayer.TrackScheduler;
 
 import java.util.Arrays;
 
+/**
+ * пример проигрывание youtube через LavaPlayer по ссылке
+ */
 @Service
-public class PlayListener extends MessageListener implements EventListener<MessageCreateEvent> {
+public class PlayRemoteYtbLavaPlayerListener extends MessageListener implements EventListener<MessageCreateEvent> {
     private final AudioPlayerManager playerManager;
     private final TrackScheduler scheduler;
 
     @Autowired
-    public PlayListener(AudioPlayerManager playerManager, TrackScheduler scheduler) {
+    public PlayRemoteYtbLavaPlayerListener(AudioPlayerManager playerManager, TrackScheduler scheduler) {
         this.playerManager = playerManager;
         this.scheduler = scheduler;
         this.command = Consts.PLAY;
