@@ -4,12 +4,12 @@ import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import ru.worm.discord.chill.discord.Consts;
+import ru.worm.discord.chill.discord.Commands;
 
 @Service
 public class SwearListener extends MessageListener implements EventListener<MessageCreateEvent> {
     public SwearListener() {
-        this.command = Consts.TODO;
+        this.command = Commands.TODO;
     }
 
     @Override

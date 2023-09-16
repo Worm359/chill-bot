@@ -2,29 +2,36 @@ package ru.worm.discord.chill.youtube;
 
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import ru.worm.discord.chill.queue.Track;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import static ru.worm.discord.chill.util.PathUtil.trackFile;
+
 @Component
 public class YtpDlpService {
 
     public static void main(String[] args) throws InterruptedException {
-        YtpDlpService service = new YtpDlpService();
-        System.out.println("calling mono");
-        service.loadAudio("")
-                .doOnSuccess(b -> System.out.println("on success - all is ok"))
-                .doOnError(t -> System.out.println("ERROR: something gone wrong"))
-                .subscribe();
-        System.out.println("called Mono. Should end soon.");
-        Thread.sleep(40000);
-        System.out.println("END.");
+//        YtpDlpService service = new YtpDlpService();
+//        System.out.println("calling mono");
+//        service.loadAudio("")
+//                .doOnSuccess(b -> System.out.println("on success - all is ok"))
+//                .doOnError(t -> System.out.println("ERROR: something gone wrong"))
+//                .subscribe();
+//        System.out.println("called Mono. Should end soon.");
+//        Thread.sleep(40000);
+//        System.out.println("END.");
     }
 
-    public Mono<Void> loadAudio(String youtubeUrl) {
+    public Mono<Void> loadAudio(Track ytTrack) {
         return Mono.create(sink -> {
-            ProcessBuilder pb = new ProcessBuilder("yt-dlp.exe", "-x", "-o", "output", "--no-playlist", youtubeUrl);
+            ProcessBuilder pb = new ProcessBuilder("yt-dlp.exe",
+                    "-x",
+                    "-o", trackFile(ytTrack),
+                    "--no-playlist",
+                    ytTrack.getUrl());
             pb.inheritIO();
             try {
                 Process ytpDlp;
@@ -37,7 +44,7 @@ public class YtpDlpService {
                     if (process != null && process.exitValue() == 0) {
                         sink.success();
                     } else {
-                        sink.error(new RuntimeException("couldn't load " + youtubeUrl));
+                        sink.error(new RuntimeException("couldn't load " + ytTrack.getUrl()));
                     }
                 });
             } catch (IOException e) {

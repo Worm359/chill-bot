@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import ru.worm.discord.chill.discord.Consts;
+import ru.worm.discord.chill.discord.Commands;
 
 import java.time.Duration;
 
@@ -22,7 +22,7 @@ public class JoinListener extends MessageListener implements EventListener<Messa
      */
     @Autowired
     public JoinListener(@Qualifier("lavaAudioProvider") AudioProvider lavaAudioProvider) {
-        this.command = Consts.JOIN;
+        this.command = Commands.JOIN;
         this.lavaAudioProvider = lavaAudioProvider;
     }
 

@@ -8,7 +8,7 @@ import discord4j.core.event.domain.message.MessageCreateEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import ru.worm.discord.chill.discord.Consts;
+import ru.worm.discord.chill.discord.Commands;
 import ru.worm.discord.chill.lavaplayer.TrackScheduler;
 
 import java.io.IOException;
@@ -28,7 +28,7 @@ public class TestLocalOpusListener extends MessageListener implements EventListe
     @Autowired
     public TestLocalOpusListener(TrackScheduler scheduler) {
         this.scheduler = scheduler;
-        this.command = Consts.PLAY_FROM_FILE;
+        this.command = Commands.PLAY_FROM_FILE;
     }
 
     @Override

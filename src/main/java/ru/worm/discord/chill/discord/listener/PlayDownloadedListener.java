@@ -9,9 +9,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import ru.worm.discord.chill.discord.Consts;
+import ru.worm.discord.chill.discord.Commands;
 import ru.worm.discord.chill.lavaplayer.TrackScheduler;
+import ru.worm.discord.chill.queue.Track;
 import ru.worm.discord.chill.util.ExceptionUtils;
+import ru.worm.discord.chill.util.PathUtil;
 import ru.worm.discord.chill.youtube.YtpDlpService;
 
 import java.io.IOException;
@@ -22,7 +24,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 
 /**
- * скачивает youtube аудио по ссылке и стримит в дискорд через LavaPlayer
+ * скачивает youtube аудио по ссылке (для каждого трека свой файл) и стримит в дискорд через LavaPlayer
  */
 @Service
 public class PlayDownloadedListener extends MessageListener implements EventListener<MessageCreateEvent> {
@@ -34,7 +36,7 @@ public class PlayDownloadedListener extends MessageListener implements EventList
     public PlayDownloadedListener(TrackScheduler scheduler, YtpDlpService ytpDl) {
         this.scheduler = scheduler;
         this.ytpDl = ytpDl;
-        this.command = Consts.DOWNLOAD_PLAY;
+        this.command = Commands.DOWNLOAD_AND_PLAY;
     }
 
     @Override
@@ -46,19 +48,22 @@ public class PlayDownloadedListener extends MessageListener implements EventList
         return filter(event.getMessage())
                 .flatMap(m -> Mono.justOrEmpty(m.getContent()))
                 .map(content -> Arrays.asList(content.split(" ")))
-                .flatMap(command -> ytpDl
-                        .loadAudio(command.get(1))
-                        .doOnSuccess((v) -> scheduler.trackLoaded(getOggTrack())))
-                        .doOnError(t -> log.error("while downloading file: {}", ExceptionUtils.getStackTrace(t)))
+                .flatMap(command -> {
+                    Track track = new Track(command.get(1));
+                    return ytpDl.loadAudio(track)
+                            .doOnSuccess((v) -> scheduler.trackLoaded(getOggTrack(track)));
+                })
+                .doOnError(t -> log.error("while downloading file: {}", ExceptionUtils.getStackTrace(t)))
                 .then();
     }
 
-    private static Path path() {
-        return Paths.get("").toAbsolutePath().resolve("output.opus");
+
+    private static Path path(Track track) {
+        return Paths.get("").toAbsolutePath().resolve(PathUtil.trackFileWithExtension(track));
     }
 
-    private static InputStream inputStreamFromFile() {
-        Path file = path();
+    private static InputStream inputStreamFromFile(Track track) {
+        Path file = path(track);
         //get input stream from file
         try {
             return Files.newInputStream(file);
@@ -66,15 +71,16 @@ public class PlayDownloadedListener extends MessageListener implements EventList
             throw new RuntimeException(e);
         }
     }
-    private static OggAudioTrack getOggTrack() {
-        NonSeekableInputStream nonSeekableIS = new NonSeekableInputStream(inputStreamFromFile());
+
+    private static OggAudioTrack getOggTrack(Track track) {
+        NonSeekableInputStream nonSeekableIS = new NonSeekableInputStream(inputStreamFromFile(track));
         AudioTrackInfo trackInfo = new AudioTrackInfo(
                 "unknown",
                 "unknown",
                 144000,
                 "identifier",
                 false,
-                path().toAbsolutePath().toString());
+                path(track).toAbsolutePath().toString());
         return new OggAudioTrack(trackInfo, nonSeekableIS);
     }
 }

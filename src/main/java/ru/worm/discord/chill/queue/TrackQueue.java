@@ -33,6 +33,10 @@ public class TrackQueue {
         }
     }
 
+    public synchronized void add(Track track) {
+        queue.add(track);
+    }
+
     public synchronized void previous() {
 
     }
