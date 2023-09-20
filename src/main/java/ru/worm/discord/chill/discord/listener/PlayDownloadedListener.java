@@ -13,7 +13,6 @@ import ru.worm.discord.chill.discord.Commands;
 import ru.worm.discord.chill.lavaplayer.TrackScheduler;
 import ru.worm.discord.chill.queue.Track;
 import ru.worm.discord.chill.util.ExceptionUtils;
-import ru.worm.discord.chill.util.PathUtil;
 import ru.worm.discord.chill.youtube.YtpDlpService;
 
 import java.io.IOException;
@@ -22,6 +21,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+
+import static ru.worm.discord.chill.logic.AudioInfoStorage.trackFileWithExtension;
 
 /**
  * скачивает youtube аудио по ссылке (для каждого трека свой файл) и стримит в дискорд через LavaPlayer
@@ -59,7 +60,7 @@ public class PlayDownloadedListener extends MessageListener implements EventList
 
 
     private static Path path(Track track) {
-        return Paths.get("").toAbsolutePath().resolve(PathUtil.trackFileWithExtension(track));
+        return Paths.get("").toAbsolutePath().resolve(trackFileWithExtension(track));
     }
 
     private static InputStream inputStreamFromFile(Track track) {

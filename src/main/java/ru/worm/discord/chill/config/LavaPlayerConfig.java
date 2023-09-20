@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import ru.worm.discord.chill.lavaplayer.LavaPlayerAudioProvider;
+import ru.worm.discord.chill.lavaplayer.LavaPlayerEventListener;
 
 @Configuration
 public class LavaPlayerConfig {
@@ -37,9 +38,11 @@ public class LavaPlayerConfig {
      */
     @Autowired
     @Bean
-    public AudioPlayer lavaPlayer(AudioPlayerManager playerManager) {
+    public AudioPlayer lavaPlayer(AudioPlayerManager playerManager, LavaPlayerEventListener lavaListener) {
         // Create an AudioPlayer so Discord4J can receive audio data
-        return playerManager.createPlayer();
+        AudioPlayer player = playerManager.createPlayer();
+        player.addListener(lavaListener);
+        return player;
     }
 
     /**

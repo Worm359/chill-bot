@@ -6,6 +6,8 @@ public interface Commands {
     public static String DOWNLOAD_AND_PLAY = "f_play";
     public static String NEXT = "next";
     public static String ADD = "add";
+    public static String PLAY_NEXT = "play_next";
+    public static String PLAY_NOW = "play_now";
     public static String PLAY_FROM_FILE = "test_p";
     public static String JOIN = "join";
 }

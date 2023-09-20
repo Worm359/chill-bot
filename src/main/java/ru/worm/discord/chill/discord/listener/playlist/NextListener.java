@@ -1,4 +1,4 @@
-package ru.worm.discord.chill.discord.listener;
+package ru.worm.discord.chill.discord.listener.playlist;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import org.slf4j.Logger;
@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.discord.Commands;
+import ru.worm.discord.chill.discord.listener.EventListener;
+import ru.worm.discord.chill.discord.listener.MessageListener;
 import ru.worm.discord.chill.queue.TrackQueue;
 
 /**
@@ -30,7 +32,7 @@ public class NextListener extends MessageListener implements EventListener<Messa
 
     public Mono<Void> execute(MessageCreateEvent event) {
         return filter(event.getMessage())
-                .doOnNext(m -> playlist.nextFromPlaylist(true))
+                .doOnNext(m -> playlist.next())
                 .then();
     }
 }

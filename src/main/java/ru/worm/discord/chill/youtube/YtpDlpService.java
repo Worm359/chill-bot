@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import static ru.worm.discord.chill.util.PathUtil.trackFile;
+import static ru.worm.discord.chill.logic.AudioInfoStorage.trackFile;
 
 @Component
 public class YtpDlpService {
