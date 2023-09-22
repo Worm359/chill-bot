@@ -11,7 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static ru.worm.discord.chill.logic.AudioInfoStorage.trackFileWithExtension;
+import static ru.worm.discord.chill.logic.AudioFilePath.trackFileWithExtension;
 
 public class StreamProvider {
     private static Path path(Track track) {

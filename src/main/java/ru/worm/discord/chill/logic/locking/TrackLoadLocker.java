@@ -2,14 +2,23 @@ package ru.worm.discord.chill.logic.locking;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import ru.worm.discord.chill.util.ExceptionUtils;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+
+import static ru.worm.discord.chill.logic.AudioFilePath.trackFileWithExtension;
 
 @Service
 public class TrackLoadLocker {
@@ -61,9 +70,9 @@ public class TrackLoadLocker {
         }
     }
 
-    //scheduled
-    @SuppressWarnings("synchronized")
+    @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
     void deleteOldLocks() {
+        log.debug("cleaning old files cash");
         Iterator<Map.Entry<Integer, FileCashLock>> iterator = locks.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<Integer, FileCashLock> entry = iterator.next();
@@ -72,11 +81,21 @@ public class TrackLoadLocker {
                 //timeRequested may be null, if it is newly created lock
                 //which was put in map, but didn't synchronize before delete get called
                 if (lock.getTimeRequested() != null && (Instant.now().toEpochMilli() - lock.getTimeRequested().toEpochMilli()) > timeoutMs) {
-                    //todo delete file
+                    tryDeleteFile(entry.getKey());
                     lock.deleted();
                     iterator.remove();
                 }
             }
+        }
+    }
+
+    private void tryDeleteFile(Integer key) {
+        try {
+            Path file = Paths.get(trackFileWithExtension(key));
+            log.debug("deleting id={} {}", key, file.toAbsolutePath());
+            Files.deleteIfExists(file);
+        } catch (IOException e) {
+            log.error("FATAL: file not deleted: {}", ExceptionUtils.getStackTrace(e));
         }
     }
 }

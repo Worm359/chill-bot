@@ -22,7 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
-import static ru.worm.discord.chill.logic.AudioInfoStorage.trackFileWithExtension;
+import static ru.worm.discord.chill.logic.AudioFilePath.trackFileWithExtension;
 
 /**
  * скачивает youtube аудио по ссылке (для каждого трека свой файл) и стримит в дискорд через LavaPlayer
