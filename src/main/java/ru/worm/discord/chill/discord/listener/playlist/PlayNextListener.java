@@ -9,7 +9,6 @@ import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.discord.Commands;
 import ru.worm.discord.chill.discord.listener.EventListener;
 import ru.worm.discord.chill.discord.listener.MessageListener;
-import ru.worm.discord.chill.queue.Track;
 import ru.worm.discord.chill.queue.TrackQueue;
 
 /**
@@ -39,7 +38,7 @@ public class PlayNextListener extends MessageListener implements EventListener<M
                     if (args.length < 2) return Mono.empty();
                     return Mono.just(args[1]);
                 })
-                .map(Track::new)
+                .map(playlist::newTrack)
                 .doOnNext(t -> playlist.addNext(t, true))
                 .then();
     }

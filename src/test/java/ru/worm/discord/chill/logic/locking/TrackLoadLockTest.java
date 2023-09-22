@@ -9,6 +9,7 @@ import ru.worm.discord.chill.util.ExceptionUtils;
 
 import java.time.Duration;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 class TrackLoadLockTest {
@@ -22,12 +23,12 @@ class TrackLoadLockTest {
 
         TrackLoadLocker locker = new TrackLoadLocker(Duration.ofMillis(1));
         log.debug("acquiring lock 1 for the first time");
-        locker.getLock(1L);
+        locker.getLock(1);
         AtomicReference<Boolean> recognisedDeletion = new AtomicReference<>(false);
 
         Future<?> anotherThreadLocking = executorService.submit(() -> {
             log.debug("acquiring lock 1 in another thread");
-            FileCashLock lock = locker.getLock(1L);
+            FileCashLock lock = locker.getLock(1);
             try {
                 //wait, so the lock gets deleted
                 Thread.sleep(1000);
@@ -38,7 +39,7 @@ class TrackLoadLockTest {
             //sync on a lock that's been deleted from a map
             synchronized (lock) {
                 try {
-                    lock.checkDeleted();
+                    lock.isDeleted();
                 } catch (AudioCashLockException e) {
                     log.debug("lock was deleted!");
                     recognisedDeletion.set(true);
@@ -59,17 +60,17 @@ class TrackLoadLockTest {
 
         TrackLoadLocker locker = new TrackLoadLocker(Duration.ofMillis(1500));
         log.debug("acquiring lock 1 for the first time");
-        locker.getLock(1L);
+        locker.getLock(1);
         AtomicReference<Boolean> recognisedDeletion = new AtomicReference<>(false);
         Thread.sleep(1000);
 
         Future<?> anotherThreadLockingWithoutDeletion = executorService.submit(() -> {
             log.debug("acquiring lock 1 in another thread");
-            FileCashLock lock = locker.getLock(1L);
+            FileCashLock lock = locker.getLock(1);
             log.debug("ready to synchronize on the lock");
             synchronized (lock) {
                 try {
-                    lock.checkDeleted(); //all is good
+                    lock.isDeleted(); //all is good
                     log.debug("lock has not been deleted");
                 } catch (AudioCashLockException e) {
                     log.debug("lock was deleted!");
@@ -80,6 +81,43 @@ class TrackLoadLockTest {
         locker.deleteOldLocks();
         anotherThreadLockingWithoutDeletion.get(10, TimeUnit.SECONDS);
         Assertions.assertFalse(recognisedDeletion.get(), "deletion was launched :(");
+    }
+
+
+    @Test
+    public void loadedSecondTimeInARow() throws InterruptedException, ExecutionException, TimeoutException {
+        executorService = Executors.newFixedThreadPool(2);
+
+        TrackLoadLocker locker = new TrackLoadLocker(Duration.ofMinutes(20));
+        log.debug("acquiring lock 1 for the first time");
+        locker.getLock(1);
+        AtomicInteger interferenceCounter = new AtomicInteger(0);
+
+        Runnable r = () -> {
+            log.debug("acquiring lock 1 in another thread");
+            FileCashLock lock = locker.getLock(1);
+            log.debug("ready to synchronize on the lock");
+            synchronized (lock) {
+                try {
+                    lock.isIdle(); //all is good
+                    log.debug("lock is idle");
+                    lock.loading();
+                    Thread.sleep(1000);
+                } catch (AudioCashLockException e) {
+                    log.debug("lock was not idle, but {}", e.getLastState());
+                    interferenceCounter.incrementAndGet();
+                } catch (InterruptedException e) {
+                    log.error("interrupted");
+                }
+            }
+        };
+
+        Future<?> firstLoader = executorService.submit(r);
+        Future<?> secondLoader = executorService.submit(r);
+        firstLoader.get(10, TimeUnit.SECONDS);
+        secondLoader.get(10, TimeUnit.SECONDS);
+        Assertions.assertEquals(1, interferenceCounter.get(),
+                "must recognise that the other loader made his job");
     }
 
     @AfterAll

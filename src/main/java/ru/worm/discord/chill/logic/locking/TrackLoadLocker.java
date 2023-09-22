@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentMap;
 public class TrackLoadLocker {
     private final Logger log = LoggerFactory.getLogger(getClass());
     private long timeoutMs = Duration.ofMinutes(15).toMillis();
-    private final ConcurrentMap<Long, FileCashLock> locks = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Integer, FileCashLock> locks = new ConcurrentHashMap<>();
 
     public TrackLoadLocker(Duration d) {
         this.timeoutMs = d.toMillis();
@@ -24,7 +24,7 @@ public class TrackLoadLocker {
     public TrackLoadLocker() {
     }
 
-    public FileCashLock getLock(Long id) {
+    public FileCashLock getLock(Integer id) {
         log.debug("acquiring lock id={}", id);
         FileCashLock lock = locks.get(id);
         if (lock == null) {
@@ -40,7 +40,7 @@ public class TrackLoadLocker {
     }
 
     //todo example outer method
-    //void somethingThatNeedsNamedLocks(Long name) {
+    //void somethingThatNeedsNamedLocks(Integer name) {
     //    LockOnDemand lock = getLock(name);
     //    synchronized (lock) {
     //        lock.checkDeleted();
@@ -49,12 +49,12 @@ public class TrackLoadLocker {
     //    }
     //}
 
-    public boolean checkFilePresent(Long id) {
+    public boolean checkFilePresent(Integer id) {
         FileCashLock lock = getLock(id);
         synchronized (lock) {
             try {
-                lock.checkDeleted();
-                return lock.isLoaded();
+                lock.isDeleted();
+                return lock.isReady();
             } catch (AudioCashLockException e) {
                 return false;
             }
@@ -64,16 +64,16 @@ public class TrackLoadLocker {
     //scheduled
     @SuppressWarnings("synchronized")
     void deleteOldLocks() {
-        Iterator<Map.Entry<Long, FileCashLock>> iterator = locks.entrySet().iterator();
+        Iterator<Map.Entry<Integer, FileCashLock>> iterator = locks.entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<Long, FileCashLock> entry = iterator.next();
+            Map.Entry<Integer, FileCashLock> entry = iterator.next();
             FileCashLock lock = entry.getValue();
             synchronized (lock) {
                 //timeRequested may be null, if it is newly created lock
                 //which was put in map, but didn't synchronize before delete get called
                 if (lock.getTimeRequested() != null && (Instant.now().toEpochMilli() - lock.getTimeRequested().toEpochMilli()) > timeoutMs) {
                     //todo delete file
-                    lock.setDeleted();
+                    lock.deleted();
                     iterator.remove();
                 }
             }

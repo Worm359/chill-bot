@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import ru.worm.discord.chill.queue.event.TrackEventCreator;
 
 import java.util.LinkedList;
-import java.util.Optional;
+import java.util.stream.Stream;
 
 @Component
 public class TrackQueue {
@@ -22,7 +22,14 @@ public class TrackQueue {
         this.trackMng = trackMng;
     }
 
-    public synchronized Optional<Track> next() { //boolean skipCurrent
+    public synchronized Track newTrack(String url) {
+        return Stream.concat(history.stream(), queue.stream())
+                .filter(t -> t.getUrl().equals(url))
+                .findFirst()
+                .orElseGet(() -> new Track(url));
+    }
+
+    public synchronized void next() { //boolean skipCurrent
         log.debug("next() event");
         if (!queue.isEmpty() && current != null) { //skipCurrent &&
             Track lastPlayed = queue.remove();
@@ -34,11 +41,9 @@ public class TrackQueue {
             current = next;
             log.debug("current track {}", next.getUrl());
             trackMng.dispatchEvent(TrackEventCreator.currentPlayingIs(current));
-            return Optional.of(next);
         } else {
             log.debug("no tracks left in queue");
             current = null;
-            return Optional.empty();
         }
     }
 
