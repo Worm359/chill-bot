@@ -55,7 +55,7 @@ public class YtpDlpService {
                     //todo if loading, create await future and generate a mono
                     //todo if idle already implemented
                     //why: later, tracks will be loaded before the play event occurs.
-                    //so, currentTrack -> load can happen when the track is already logging.
+                    //so, currentTrack -> load can happen when the track is already loading.
                     //to not lose the player.play collback on a loaded track, we should await it, if loading.
                     trackLock.isIdle();
                     trackLock.loading();

@@ -1,5 +1,6 @@
 package ru.worm.discord.chill.youtube.oembed;
 
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -11,7 +12,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 @Service
-public class TitleService {
+public class TitleService implements DisposableBean {
     private static final String UNKNOWN_TITLE = "unknown - unknown";
     private final ExecutorService executor;
     private final OEmbedService oEmbedApi;
@@ -52,5 +53,10 @@ public class TitleService {
     @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.HOURS)
     void clean() {
         this.titles.clear();
+    }
+
+    @Override
+    public void destroy() {
+        this.executor.shutdown();
     }
 }
