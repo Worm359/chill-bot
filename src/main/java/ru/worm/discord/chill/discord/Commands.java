@@ -6,8 +6,12 @@ public interface Commands {
     public static String DOWNLOAD_AND_PLAY = "f_play";
     public static String NEXT = "next";
     public static String ADD = "add";
-    public static String PLAY_NEXT = "play_next";
-    public static String PLAY_NOW = "play_now";
+    public static String GET_HISTORY = "hist";
+    public static String GET_PLAYING = "list";
+    public static String GET_MERGED_PLAYLIST = "list_all";
+    public static String PLAY_NEXT = "play_next"; //todo add functionality: if id passed, search in history/playlist and use that track
+    public static String PLAY_NOW = "play_now"; //todo add functionality: if id passed, search in history/playlist and use that track
+    //todo shuffle????
     public static String PLAY_FROM_FILE = "test_p";
-    public static String JOIN = "join";
+    public static String JOIN = "join"; //todo automatically join when playing something...
 }

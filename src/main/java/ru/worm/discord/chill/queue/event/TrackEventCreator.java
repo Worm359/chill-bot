@@ -9,4 +9,11 @@ public class TrackEventCreator {
         event.setPayload(t);
         return event;
     }
+
+    public static TrackEvent<Track> newTrackAdded(Track t) {
+        TrackEvent<Track> event = new TrackEvent<>();
+        event.setType(TrackEventType.NEW_TRACK);
+        event.setPayload(t);
+        return event;
+    }
 }

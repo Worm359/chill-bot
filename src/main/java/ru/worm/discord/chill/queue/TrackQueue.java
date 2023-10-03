@@ -6,8 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.worm.discord.chill.queue.event.TrackEventCreator;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -37,12 +38,12 @@ public class TrackQueue {
                 .findFirst();
     }
 
-    public synchronized Collection<Track> getHistory() {
-        return history.stream().toList();
+    public synchronized List<Track> getHistory() {
+        return new ArrayList<>(history);
     }
 
-    public synchronized Collection<Track> getPlaylist() {
-        return queue.stream().toList();
+    public synchronized List<Track> getPlaylist() {
+        return new ArrayList<>(queue);
     }
 
     public synchronized void next() { //boolean skipCurrent
@@ -74,6 +75,7 @@ public class TrackQueue {
 
     public synchronized void add(Track track) {
         queue.add(track);
+        trackMng.dispatchEvent(TrackEventCreator.newTrackAdded(track));
         kick();
     }
 
@@ -85,6 +87,7 @@ public class TrackQueue {
             position = 1;
         }
         queue.add(position, track);
+        trackMng.dispatchEvent(TrackEventCreator.newTrackAdded(track));
         if (casual) kick();
     }
 

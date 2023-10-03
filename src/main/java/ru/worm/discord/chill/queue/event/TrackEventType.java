@@ -1,5 +1,7 @@
 package ru.worm.discord.chill.queue.event;
 
 public enum TrackEventType {
-    CURRENT_TRACK
+    CURRENT_TRACK,
+    NEW_TRACK,
+
 }
