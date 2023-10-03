@@ -48,16 +48,6 @@ public class TrackLoadLocker {
         return lock;
     }
 
-    //todo example outer method
-    //void somethingThatNeedsNamedLocks(Integer name) {
-    //    LockOnDemand lock = getLock(name);
-    //    synchronized (lock) {
-    //        lock.checkDeleted();
-    //        //load;
-    //        lock.setLoaded();
-    //    }
-    //}
-
     public boolean checkFilePresent(Integer id) {
         FileCashLock lock = getLock(id);
         synchronized (lock) {
