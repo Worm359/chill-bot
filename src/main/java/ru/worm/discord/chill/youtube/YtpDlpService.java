@@ -51,7 +51,7 @@ public class YtpDlpService {
             try {
                 FileCashLock trackLock = locker.getLock(ytTrack.getId());
                 synchronized (trackLock) {
-                    //todo if deleted | deleted throw AutoLockException
+                    //todo if deleted | error throw AutoLockException
                     //todo if loading, create await future and generate a mono
                     //todo if idle already implemented
                     //why: later, tracks will be loaded before the play event occurs.

@@ -33,9 +33,8 @@ public class DiscordClientChillService implements InitializingBean {
 
     private <T extends Event> void subscribeListener(EventListener<T> listener) {
         //проверка на то что команда подходит слушателю сейчас внутри слушателя, можно перенести сюда (вынеся слушателей в мапу)
-        discord.on(listener.getEventType())
-                    .flatMap(listener::execute)
-                    .onErrorResume(listener::handleError)
-                    .subscribe();
+        discord.on(listener.getEventType(), event ->
+                        listener.execute(event).onErrorResume(listener::handleError))
+                .subscribe();
     }
 }
