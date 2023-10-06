@@ -56,7 +56,7 @@ public abstract class MessageListener implements IWithPrefix {
                         String err = "%s\n%s".formatted(throwable.getMessage(), CliOption.help(options().getFirst()));
                         return eventMessage.getChannel()
                                 .flatMap(channel -> channel.createMessage(err))
-                                .flatMap(response -> Mono.empty()); // fixme maybe empty()? Re-throw the error to propagate it further
+                                .flatMap(response -> Mono.empty());
                     } else {
                         return Mono.error(throwable); // Handle other errors as needed
                     }

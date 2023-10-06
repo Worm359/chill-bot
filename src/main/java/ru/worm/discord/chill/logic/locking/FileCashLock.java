@@ -14,7 +14,7 @@ public class FileCashLock {
     public synchronized void isDeleted() throws AudioCashLockException {
         if (TrackCashState.deleted.equals(state)) throw new AudioCashLockException(state);
     }
-    public synchronized void isIdle() throws AudioCashLockException {
+    public synchronized void checkIdleIfNotThrow() throws AudioCashLockException {
         if (!TrackCashState.idle.equals(state)) throw new AudioCashLockException(state);
     }
     public synchronized boolean isReady() {

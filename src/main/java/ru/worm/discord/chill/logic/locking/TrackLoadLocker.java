@@ -20,6 +20,17 @@ import java.util.concurrent.TimeUnit;
 
 import static ru.worm.discord.chill.logic.AudioFilePath.trackFileWithExtension;
 
+/**
+ * Why this, instead of single queue for loading files:<br>
+ * 1. Assume we want to load 3 next files beforehand.
+ * Current track started playing, 3 others are loading.
+ * I press shuffle. Now I'm gonna wait 4 times more before my random track is loaded.
+ * I could also cancel loading, but it requires code, and I am probably gonna listen to those tracks anyway.
+ * So, I don't have good reason to do cancellation.
+ * Also, after shuffle next track could swap to the one that just started loading.
+ * 2. Assume I don't load tracks beforehand. Could my track be in queue two times in a row? I press next...
+ * 3. Other options: synchronize on a Track object?
+ */
 @Service
 public class TrackLoadLocker {
     private final Logger log = LoggerFactory.getLogger(getClass());
@@ -60,9 +71,10 @@ public class TrackLoadLocker {
         }
     }
 
-    @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelay = 25, timeUnit = TimeUnit.MINUTES)
     void deleteOldLocks() {
         log.debug("cleaning old files cash");
+        long nowMilli = Instant.now().toEpochMilli();
         Iterator<Map.Entry<Integer, FileCashLock>> iterator = locks.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<Integer, FileCashLock> entry = iterator.next();
@@ -70,7 +82,7 @@ public class TrackLoadLocker {
             synchronized (lock) {
                 //timeRequested may be null, if it is newly created lock
                 //which was put in map, but didn't synchronize before delete get called
-                if (lock.getTimeRequested() != null && (Instant.now().toEpochMilli() - lock.getTimeRequested().toEpochMilli()) > timeoutMs) {
+                if (lock.getTimeRequested() != null && (nowMilli - lock.getTimeRequested().toEpochMilli()) > timeoutMs) {
                     tryDeleteFile(entry.getKey());
                     lock.deleted();
                     iterator.remove();

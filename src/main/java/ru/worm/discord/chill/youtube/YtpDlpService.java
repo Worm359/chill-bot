@@ -28,26 +28,8 @@ public class YtpDlpService {
         this.locker = locker;
     }
 
-    public static void main(String[] args) throws InterruptedException {
-//        YtpDlpService service = new YtpDlpService();
-//        System.out.println("calling mono");
-//        service.loadAudio("")
-//                .doOnSuccess(b -> System.out.println("on success - all is ok"))
-//                .doOnError(t -> System.out.println("ERROR: something gone wrong"))
-//                .subscribe();
-//        System.out.println("called Mono. Should end soon.");
-//        Thread.sleep(40000);
-//        System.out.println("END.");
-    }
-
     public Mono<Void> loadAudio(Track ytTrack) {
         return Mono.create(sink -> {
-            ProcessBuilder pb = new ProcessBuilder("yt-dlp.exe",
-                    "-x",
-                    "-o", trackFile(ytTrack),
-                    "--no-playlist",
-                    ytTrack.getUrl());
-            pb.inheritIO();
             try {
                 FileCashLock trackLock = locker.getLock(ytTrack.getId());
                 synchronized (trackLock) {
@@ -56,25 +38,30 @@ public class YtpDlpService {
                     //todo if idle already implemented
                     //why: later, tracks will be loaded before the play event occurs.
                     //so, currentTrack -> load can happen when the track is already loading.
-                    //to not lose the player.play collback on a loaded track, we should await it, if loading.
-                    trackLock.isIdle();
+                    //to not lose the player.play callback on a loaded track, we should await it, if loading.
+                    trackLock.checkIdleIfNotThrow();
                     trackLock.loading();
                 }
-                Process ytpDlp;
-                System.out.println("inside mono create before process start...");
-                ytpDlp = pb.start();
-                System.out.println("inside mono create after process start...");
-                CompletableFuture<Process> future = ytpDlp.onExit();
-                future.completeOnTimeout(ytpDlp, 30, TimeUnit.SECONDS);
+                ProcessBuilder pb = new ProcessBuilder("yt-dlp.exe",
+                        "-x",
+                        "-o", trackFile(ytTrack),
+                        "--no-playlist",
+                        ytTrack.getUrl());
+                pb.inheritIO();
+                Process ytpDlpProcess = pb.start();
+                CompletableFuture<Process> future = ytpDlpProcess.onExit();
+                future.completeOnTimeout(ytpDlpProcess, 30, TimeUnit.SECONDS);
                 future.whenComplete((process, throwable) -> {
-                    if (process != null && process.exitValue() == 0) {
-                        //lock#timeRequested was just updated. no need to check deleted state
-                        trackLock.ready();
-                        sink.success();
-                    } else {
-                        //lock#timeRequested was just updated. no need to check deleted state
-                        trackLock.error();
-                        sink.error(new RuntimeException("couldn't load " + ytTrack.getUrl()));
+                    synchronized (trackLock) {
+                        if (process != null && !process.isAlive() && process.exitValue() == 0) {
+                            //lock#timeRequested was just updated. no need to check deleted state
+                            trackLock.ready();
+                            sink.success();
+                        } else {
+                            //lock#timeRequested was just updated. no need to check deleted state
+                            trackLock.error();
+                            sink.error(new RuntimeException("couldn't load " + ytTrack.getUrl()));
+                        }
                     }
                 });
             } catch (IOException e) {

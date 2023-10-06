@@ -99,7 +99,7 @@ class TrackLoadLockTest {
             log.debug("ready to synchronize on the lock");
             synchronized (lock) {
                 try {
-                    lock.isIdle(); //all is good
+                    lock.checkIdleIfNotThrow(); //all is good
                     log.debug("lock is idle");
                     lock.loading();
                     Thread.sleep(1000);
