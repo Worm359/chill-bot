@@ -21,7 +21,7 @@ class TrackLoadLockTest {
     public void testLockDeletedAfterAcquiring() throws InterruptedException, ExecutionException, TimeoutException {
         executorService = Executors.newFixedThreadPool(1);
 
-        TrackLoadLocker locker = new TrackLoadLocker(Duration.ofMillis(1));
+        TrackLoadLocker locker = new LockerWithoutFileDeletion(Duration.ofMillis(1));
         log.debug("acquiring lock 1 for the first time");
         locker.getLock(1);
         AtomicReference<Boolean> recognisedDeletion = new AtomicReference<>(false);
@@ -58,7 +58,7 @@ class TrackLoadLockTest {
     public void deleteIntervalRefreshed() throws InterruptedException, ExecutionException, TimeoutException {
         executorService = Executors.newFixedThreadPool(1);
 
-        TrackLoadLocker locker = new TrackLoadLocker(Duration.ofMillis(1500));
+        TrackLoadLocker locker = new LockerWithoutFileDeletion(Duration.ofMillis(1500));
         log.debug("acquiring lock 1 for the first time");
         locker.getLock(1);
         AtomicReference<Boolean> recognisedDeletion = new AtomicReference<>(false);
@@ -88,7 +88,7 @@ class TrackLoadLockTest {
     public void loadedSecondTimeInARow() throws InterruptedException, ExecutionException, TimeoutException {
         executorService = Executors.newFixedThreadPool(2);
 
-        TrackLoadLocker locker = new TrackLoadLocker(Duration.ofMinutes(20));
+        TrackLoadLocker locker = new LockerWithoutFileDeletion(Duration.ofMinutes(20));
         log.debug("acquiring lock 1 for the first time");
         locker.getLock(1);
         AtomicInteger interferenceCounter = new AtomicInteger(0);
@@ -126,6 +126,20 @@ class TrackLoadLockTest {
             executorService.shutdown();
         } catch (Exception e) {
             log.error(ExceptionUtils.getStackTrace(e));
+        }
+    }
+
+    private static class LockerWithoutFileDeletion extends TrackLoadLocker {
+        public LockerWithoutFileDeletion(Duration d) {
+            super(d);
+        }
+
+        public LockerWithoutFileDeletion() {
+        }
+
+        @Override
+        protected void tryDeleteFile(Integer key) {
+            //do nothing
         }
     }
   

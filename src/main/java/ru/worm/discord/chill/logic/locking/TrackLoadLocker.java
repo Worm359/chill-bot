@@ -91,7 +91,7 @@ public class TrackLoadLocker {
         }
     }
 
-    private void tryDeleteFile(Integer key) {
+    protected void tryDeleteFile(Integer key) {
         try {
             Path file = Paths.get(trackFileWithExtension(key));
             log.debug("deleting id={} {}", key, file.toAbsolutePath());
