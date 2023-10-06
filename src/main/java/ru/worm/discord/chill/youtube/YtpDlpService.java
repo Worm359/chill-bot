@@ -52,16 +52,14 @@ public class YtpDlpService {
                 CompletableFuture<Process> future = ytpDlpProcess.onExit();
                 future.completeOnTimeout(ytpDlpProcess, 30, TimeUnit.SECONDS);
                 future.whenComplete((process, throwable) -> {
-                    synchronized (trackLock) {
-                        if (process != null && !process.isAlive() && process.exitValue() == 0) {
-                            //lock#timeRequested was just updated. no need to check deleted state
-                            trackLock.ready();
-                            sink.success();
-                        } else {
-                            //lock#timeRequested was just updated. no need to check deleted state
-                            trackLock.error();
-                            sink.error(new RuntimeException("couldn't load " + ytTrack.getUrl()));
-                        }
+                    if (process != null && !process.isAlive() && process.exitValue() == 0) {
+                        //lock#timeRequested was just updated. no need to check deleted state
+                        trackLock.ready();
+                        sink.success();
+                    } else {
+                        //lock#timeRequested was just updated. no need to check deleted state
+                        trackLock.error();
+                        sink.error(new RuntimeException("couldn't load " + ytTrack.getUrl()));
                     }
                 });
             } catch (IOException e) {
