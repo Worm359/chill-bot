@@ -12,7 +12,7 @@ import ru.worm.discord.chill.discord.listener.EventListener;
 import ru.worm.discord.chill.discord.listener.MessageListener;
 import ru.worm.discord.chill.logic.command.CliOption;
 import ru.worm.discord.chill.logic.command.IOptionValidator;
-import ru.worm.discord.chill.logic.command.validation.PlayNextValidator;
+import ru.worm.discord.chill.logic.command.validation.IdOrUrlValidator;
 import ru.worm.discord.chill.queue.Track;
 import ru.worm.discord.chill.queue.TrackQueue;
 import ru.worm.discord.chill.util.Pair;
@@ -41,8 +41,8 @@ public class PlayNextListener extends MessageListener implements EventListener<M
     public Mono<Void> execute(MessageCreateEvent event) {
         return filterWithOptions(event.getMessage())
                 .doOnNext(p -> {
-                    String url = p.getSecond().getOptionValue("url");
-                    String id = p.getSecond().getOptionValue("id");
+                    String url = p.getSecond().getOptionValue(CliOption.optUrl);
+                    String id = p.getSecond().getOptionValue(CliOption.optId);
                     if (url != null) {
                         playlist.addNext(playlist.newTrack(url), true);
                     } else {
@@ -62,6 +62,6 @@ public class PlayNextListener extends MessageListener implements EventListener<M
 
     @Override
     protected Pair<Options, IOptionValidator> options() {
-        return new Pair<>(CliOption.playNext, PlayNextValidator.INSTANCE);
+        return new Pair<>(CliOption.idOrUrl, IdOrUrlValidator.INSTANCE);
     }
 }

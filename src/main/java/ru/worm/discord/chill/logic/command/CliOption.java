@@ -38,16 +38,16 @@ public class CliOption {
             .build();
 
     //play next
-    public static final Options playNext;
-    public static final Option playNextId = new Option("id", true, "track.id from history/playlist");
-    public static final Option playNextUrl = new Option("url", true, "url for youtube video");
+    public static final Options idOrUrl;
+    public static final Option optId = new Option("id", true, "track.id from history/playlist");
+    public static final Option optUrl = new Option("url", true, "url for youtube video");
     static {
-        playNext = new Options();
+        idOrUrl = new Options();
         OptionGroup playNextGroup = new OptionGroup();
-        playNextGroup.addOption(playNextId);//grp.addOption(new Option("id", true, "track.id from history/playlist"));
-        playNextGroup.addOption(playNextUrl);//grp.addOption(new Option("url", true, "url for youtube video"));
+        playNextGroup.addOption(optId);//grp.addOption(new Option("id", true, "track.id from history/playlist"));
+        playNextGroup.addOption(optUrl);//grp.addOption(new Option("url", true, "url for youtube video"));
         playNextGroup.setRequired(true);
-        playNext.addOptionGroup(playNextGroup);
+        idOrUrl.addOptionGroup(playNextGroup);
     }
 
     public static final Options emptyOptions = new Options();

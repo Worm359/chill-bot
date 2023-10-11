@@ -9,8 +9,8 @@ public interface Commands {
     public static String GET_HISTORY = "hist";
     public static String GET_PLAYING = "list";
     public static String GET_MERGED_PLAYLIST = "list_all";
-    public static String PLAY_NEXT = "play_next"; //todo add functionality: if id passed, search in history/playlist and use that track
-    public static String PLAY_NOW = "play_now"; //todo add functionality: if id passed, search in history/playlist and use that track
+    public static String PLAY_NEXT = "play_next";
+    public static String PLAY_NOW = "play_now";
     //todo remove???
     //todo previous???
     //todo shuffle????

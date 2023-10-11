@@ -9,12 +9,12 @@ import ru.worm.discord.chill.util.TextUtil;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class PlayNextValidator implements IOptionValidator {
-    public static final PlayNextValidator INSTANCE = new PlayNextValidator();
+public class IdOrUrlValidator implements IOptionValidator {
+    public static final IdOrUrlValidator INSTANCE = new IdOrUrlValidator();
     @Override
     public void validate(CommandLine opts) throws ParseException {
-        String id = opts.getOptionValue(CliOption.playNextId);
-        String url = opts.getOptionValue(CliOption.playNextUrl);
+        String id = opts.getOptionValue(CliOption.optId);
+        String url = opts.getOptionValue(CliOption.optUrl);
         if (!TextUtil.isEmpty(id)) {
             try {
                 Integer idNum = Integer.valueOf(id);
