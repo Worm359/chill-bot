@@ -38,7 +38,7 @@ public abstract class MessageListener implements IWithPrefix {
                     Options opts = options().getFirst();
                     IOptionValidator val = options().getSecond();
                     if (opts == null) {
-                        return Mono.error(new IllegalStateException("options filtering cannot be applied without imlementing #options()"));
+                        return Mono.error(new IllegalStateException("options filtering cannot be applied without implementing #options()"));
                     }
                     String messageContent = message.getContent();
                     String[] commandWords = messageContent.split(" ");

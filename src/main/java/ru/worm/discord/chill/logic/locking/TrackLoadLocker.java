@@ -63,7 +63,7 @@ public class TrackLoadLocker {
         FileCashLock lock = getLock(id);
         synchronized (lock) {
             try {
-                lock.isDeleted();
+                lock.checkDeletedThrowIfYes();
                 return lock.isReady();
             } catch (AudioCashLockException e) {
                 return false;

@@ -11,7 +11,7 @@ public class FileCashLock {
      * if the method does not throw an exception, and the lock was just acquired
      * #timeRequested has been successfully updated and will not be picked for a deletion
      */
-    public synchronized void isDeleted() throws AudioCashLockException {
+    public synchronized void checkDeletedThrowIfYes() throws AudioCashLockException {
         if (TrackCashState.deleted.equals(state)) throw new AudioCashLockException(state);
     }
     public synchronized void checkIdleIfNotThrow() throws AudioCashLockException {

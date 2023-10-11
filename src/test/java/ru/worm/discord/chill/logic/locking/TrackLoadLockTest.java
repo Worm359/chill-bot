@@ -39,7 +39,7 @@ class TrackLoadLockTest {
             //sync on a lock that's been deleted from a map
             synchronized (lock) {
                 try {
-                    lock.isDeleted();
+                    lock.checkDeletedThrowIfYes();
                 } catch (AudioCashLockException e) {
                     log.debug("lock was deleted!");
                     recognisedDeletion.set(true);
@@ -70,7 +70,7 @@ class TrackLoadLockTest {
             log.debug("ready to synchronize on the lock");
             synchronized (lock) {
                 try {
-                    lock.isDeleted(); //all is good
+                    lock.checkDeletedThrowIfYes(); //all is good
                     log.debug("lock has not been deleted");
                 } catch (AudioCashLockException e) {
                     log.debug("lock was deleted!");
