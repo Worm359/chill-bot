@@ -42,6 +42,11 @@ public abstract class MessageListener implements IWithPrefix {
                     }
                     String messageContent = message.getContent();
                     String[] commandWords = messageContent.split(" ");
+                    if (Arrays.stream(commandWords).anyMatch(s -> s.equalsIgnoreCase("-h") || s.equalsIgnoreCase("--help"))) {
+                        return eventMessage.getChannel()
+                                .flatMap(channel -> channel.createMessage(CliOption.help(commandName(), opts)))
+                                .flatMap(response -> Mono.empty());
+                    }
                     try {
                         CommandLine parse = parser.parse(opts,
                                 Arrays.copyOfRange(commandWords, 1, commandWords.length));
@@ -53,7 +58,7 @@ public abstract class MessageListener implements IWithPrefix {
                 })
                 .onErrorResume(throwable -> {
                     if (throwable instanceof ParseException) {
-                        String err = "%s\n%s".formatted(throwable.getMessage(), CliOption.help(options().getFirst()));
+                        String err = "%s\n%s".formatted(throwable.getMessage(), CliOption.help(commandName(), options().getFirst()));
                         return eventMessage.getChannel()
                                 .flatMap(channel -> channel.createMessage(err))
                                 .flatMap(response -> Mono.empty());

@@ -1,6 +1,7 @@
 package ru.worm.discord.chill.discord.listener.playlist;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
+import org.apache.commons.cli.Options;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +10,14 @@ import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.discord.Commands;
 import ru.worm.discord.chill.discord.listener.EventListener;
 import ru.worm.discord.chill.discord.listener.MessageListener;
+import ru.worm.discord.chill.logic.command.CliOption;
+import ru.worm.discord.chill.logic.command.IOptionValidator;
+import ru.worm.discord.chill.logic.command.validation.PlayNextValidator;
+import ru.worm.discord.chill.queue.Track;
 import ru.worm.discord.chill.queue.TrackQueue;
+import ru.worm.discord.chill.util.Pair;
+
+import java.util.Optional;
 
 /**
  * добавляет в playlist следующий youtube трек
@@ -31,15 +39,29 @@ public class PlayNextListener extends MessageListener implements EventListener<M
     }
 
     public Mono<Void> execute(MessageCreateEvent event) {
-        return filter(event.getMessage())
-                .flatMap(m -> Mono.justOrEmpty(m.getContent()))
-                .map(content -> content.split(" "))
-                .flatMap(args -> {
-                    if (args.length < 2) return Mono.empty();
-                    return Mono.just(args[1]);
+        return filterWithOptions(event.getMessage())
+                .doOnNext(p -> {
+                    String url = p.getSecond().getOptionValue("url");
+                    String id = p.getSecond().getOptionValue("id");
+                    if (url != null) {
+                        playlist.addNext(playlist.newTrack(url), true);
+                    } else {
+                        Optional<Track> trackFromPlaylist = playlist.getTrackById(Integer.valueOf(id));
+                        trackFromPlaylist.ifPresentOrElse(t -> {
+                                    playlist.remove(t.getId());
+                                    playlist.addNext(t, true);
+                                },
+                                () -> event.getMessage()
+                                        .getChannel()
+                                        .flatMap(ch -> ch.createMessage("id %s not found".formatted(id)))
+                                        .subscribe());
+                    }
                 })
-                .map(playlist::newTrack)
-                .doOnNext(t -> playlist.addNext(t, true))
                 .then();
+    }
+
+    @Override
+    protected Pair<Options, IOptionValidator> options() {
+        return new Pair<>(CliOption.playNext, PlayNextValidator.INSTANCE);
     }
 }

@@ -11,6 +11,8 @@ public interface Commands {
     public static String GET_MERGED_PLAYLIST = "list_all";
     public static String PLAY_NEXT = "play_next"; //todo add functionality: if id passed, search in history/playlist and use that track
     public static String PLAY_NOW = "play_now"; //todo add functionality: if id passed, search in history/playlist and use that track
+    //todo remove???
+    //todo previous???
     //todo shuffle????
     public static String PLAY_FROM_FILE = "test_p";
     public static String JOIN = "join"; //todo automatically join when playing something...

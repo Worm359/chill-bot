@@ -6,10 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.worm.discord.chill.queue.event.TrackEventCreator;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 @Component
@@ -52,6 +49,7 @@ public class TrackQueue {
             Track lastPlayed = queue.remove();
             log.debug("current track is {}, skipping it", lastPlayed.getUrl());
             history.addFirst(lastPlayed);
+            if (history.size() > 20) history.removeLast();
         }
         if (!queue.isEmpty()) {
             Track next = queue.getFirst();
@@ -91,12 +89,29 @@ public class TrackQueue {
         if (casual) kick();
     }
 
+    public synchronized void remove(Integer id) {
+        int i = 0;
+        for (Iterator<Track> iterator = queue.iterator(); iterator.hasNext(); ) {
+            Track track = iterator.next();
+            if (!track.getId().equals(id) || i == 0) {
+                i++;
+                continue;
+            }
+            iterator.remove();
+            break;
+        }
+    }
+
     public synchronized void previous() {
-
+        if (!history.isEmpty()) {
+            Track track = history.removeFirst();
+            queue.addFirst(track);
+            current = track;
+            trackMng.dispatchEvent(TrackEventCreator.currentPlayingIs(current));
+        } else if (current != null) {
+            trackMng.dispatchEvent(TrackEventCreator.currentPlayingIs(current));
+        }
     }
 
-    public synchronized void getQueue() {
-
-    }
 
 }
