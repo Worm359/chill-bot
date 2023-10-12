@@ -5,6 +5,7 @@ public interface Commands {
     public static String PLAY = "play";
     public static String DOWNLOAD_AND_PLAY = "f_play";
     public static String NEXT = "next";
+    public static String PREV = "prev";
     public static String ADD = "add";
     public static String GET_HISTORY = "hist";
     public static String GET_PLAYING = "list";
