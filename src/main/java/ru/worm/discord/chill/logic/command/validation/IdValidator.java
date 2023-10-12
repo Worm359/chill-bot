@@ -12,7 +12,7 @@ public class IdValidator implements IOptionValidator {
     @Override
     public void validate(CommandLine opts) throws ParseException {
         String id = opts.getOptionValue(CliOption.optIdRequired);
-        if (!TextUtil.isEmpty(id)) {
+        if (TextUtil.isEmpty(id)) {
             throw new ParseException("id cannot be empty");
         }
         try {
