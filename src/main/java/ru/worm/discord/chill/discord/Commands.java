@@ -13,8 +13,7 @@ public interface Commands {
     public static String PLAY_NEXT = "play_next";
     public static String PLAY_NOW = "play_now";
     public static String REMOVE = "rmv";
-    //todo remove???
-    //todo previous???
+    public static String PLAYER = "player";
     //todo shuffle????
     public static String PLAY_FROM_FILE = "test_p";
     public static String JOIN = "join"; //todo automatically join when playing something...

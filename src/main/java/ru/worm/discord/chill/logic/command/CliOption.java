@@ -59,5 +59,18 @@ public class CliOption {
         id.addOption(optIdRequired);
     }
 
+    public static final Options player;
+    public static final Option optStop = new Option("s", "stop",false, "stop playing");
+    public static final Option optStart = new Option("p", "play",false, "start playing");
+
+    static {
+        player = new Options();
+        OptionGroup grp = new OptionGroup();
+        grp.addOption(optStart);
+        grp.addOption(optStop);
+        grp.setRequired(true);
+        player.addOptionGroup(grp);
+    }
+
     public static final Options emptyOptions = new Options();
 }
