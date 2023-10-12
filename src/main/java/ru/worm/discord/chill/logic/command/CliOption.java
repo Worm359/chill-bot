@@ -50,5 +50,14 @@ public class CliOption {
         idOrUrl.addOptionGroup(playNextGroup);
     }
 
+    public static final Options id;
+    public static final Option optIdRequired;
+    static {
+        id = new Options();
+        optIdRequired = new Option("id", true, "track.id from history/playlist");
+        optIdRequired.setRequired(true);
+        id.addOption(optIdRequired);
+    }
+
     public static final Options emptyOptions = new Options();
 }

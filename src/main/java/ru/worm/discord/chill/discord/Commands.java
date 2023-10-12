@@ -12,6 +12,7 @@ public interface Commands {
     public static String GET_MERGED_PLAYLIST = "list_all";
     public static String PLAY_NEXT = "play_next";
     public static String PLAY_NOW = "play_now";
+    public static String REMOVE = "rmv";
     //todo remove???
     //todo previous???
     //todo shuffle????
