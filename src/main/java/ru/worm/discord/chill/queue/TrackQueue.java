@@ -90,6 +90,7 @@ public class TrackQueue {
     }
 
     public synchronized void remove(Integer id) {
+        log.debug("removing {}", id);
         int i = 0;
         for (Iterator<Track> iterator = queue.iterator(); iterator.hasNext(); ) {
             Track track = iterator.next();
@@ -98,6 +99,7 @@ public class TrackQueue {
                 continue;
             }
             iterator.remove();
+            log.debug("removed {} successfully", id);
             break;
         }
     }
