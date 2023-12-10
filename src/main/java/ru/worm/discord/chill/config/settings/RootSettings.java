@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties("chill-bot")
 public class RootSettings {
     DiscordSetting discord;
+    YoutubeSetting youtube = new YoutubeSetting();
 
     public DiscordSetting getDiscord() {
         return discord;
@@ -16,5 +17,13 @@ public class RootSettings {
 
     public void setDiscord(DiscordSetting discord) {
         this.discord = discord;
+    }
+
+    public YoutubeSetting getYoutube() {
+        return youtube;
+    }
+
+    public void setYoutube(YoutubeSetting youtube) {
+        this.youtube = youtube;
     }
 }
