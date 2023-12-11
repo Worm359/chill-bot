@@ -14,7 +14,6 @@ import ru.worm.discord.chill.logic.command.validation.IdValidator;
 import ru.worm.discord.chill.queue.TrackQueue;
 import ru.worm.discord.chill.util.Pair;
 
-//todo check
 @Service
 public class SkipToListener extends MessageListener implements EventListener<MessageCreateEvent> {
     private final TrackQueue playlist;

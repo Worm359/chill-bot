@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
+import static ru.worm.discord.chill.logic.AudioFilePath.trackFilePart;
 import static ru.worm.discord.chill.logic.AudioFilePath.trackFileWithExtension;
 
 /**
@@ -94,9 +95,10 @@ public class TrackLoadLocker {
     protected void tryDeleteFile(Integer key) {
         try {
             Path file = Paths.get(trackFileWithExtension(key));
-            log.debug("deleting id={} {}", key, file.toAbsolutePath());
+            Path filePart = Paths.get(trackFilePart(key));
+            log.debug("deleting id={} {}/{}", key, file.toAbsolutePath(), filePart.toAbsolutePath());
             Files.deleteIfExists(file);
-            //fixme delete *.part files.
+            Files.deleteIfExists(filePart);
         } catch (IOException e) {
             log.error("FATAL: file not deleted: {}", ExceptionUtils.getStackTrace(e));
         }

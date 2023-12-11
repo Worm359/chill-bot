@@ -48,8 +48,7 @@ public class TrackQueue {
         if (!queue.isEmpty() && current != null) { //skipCurrent &&
             Track lastPlayed = queue.remove();
             log.debug("current track is {}, skipping it", lastPlayed.getUrl());
-            history.addFirst(lastPlayed);
-            if (history.size() > 20) history.removeLast();
+            addToHistory(lastPlayed);
         }
         if (!queue.isEmpty()) {
             Track next = queue.getFirst();
@@ -119,10 +118,11 @@ public class TrackQueue {
         Iterator<Track> iterator = queue.iterator();
         int i = 0;
         while (iterator.hasNext() ) {
-            iterator.next();
+            Track track = iterator.next();
             if (i == (indexOf - 1)) {
                 break;
             }
+            addToHistory(track);
             iterator.remove();
             i++;
         }
@@ -140,4 +140,8 @@ public class TrackQueue {
         }
     }
 
+    private void addToHistory(Track track) {
+        history.addFirst(track);
+        if (history.size() > 20) history.removeLast();
+    }
 }

@@ -19,4 +19,8 @@ public class AudioFilePath {
     public static String trackFileWithExtension(Integer id) {
         return "%s.opus".formatted(trackFile(id));
     }
+
+    public static String trackFilePart(Integer id) {
+        return "%s.part".formatted(trackFile(id));
+    }
 }
