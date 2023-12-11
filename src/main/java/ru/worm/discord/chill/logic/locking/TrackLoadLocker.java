@@ -96,6 +96,7 @@ public class TrackLoadLocker {
             Path file = Paths.get(trackFileWithExtension(key));
             log.debug("deleting id={} {}", key, file.toAbsolutePath());
             Files.deleteIfExists(file);
+            //fixme delete *.part files.
         } catch (IOException e) {
             log.error("FATAL: file not deleted: {}", ExceptionUtils.getStackTrace(e));
         }

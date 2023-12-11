@@ -115,6 +115,7 @@ public class YtpDlpService {
         });
     }
 
+    //fixme if duration is not loadable, allow loading?
     private Optional<String> checkDuration(Track ytTrack) {
         String videoId = YoutubeUtil.stripVideoUrl(ytTrack.getUrl()).orElse(null);
         if (videoId == null) {
