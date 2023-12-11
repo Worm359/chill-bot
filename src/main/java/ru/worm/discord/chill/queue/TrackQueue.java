@@ -104,6 +104,31 @@ public class TrackQueue {
         }
     }
 
+    public synchronized void skipTo(int id) {
+        log.debug("removing to {}", id);
+        int indexOf = -1;
+        for (int i = 0; i < queue.size(); i++) {
+            Track track = queue.get(i);
+            if (track.getId().equals(id)) {
+                indexOf = i;
+            }
+        }
+        if (indexOf == -1 || indexOf == 0) {
+            return;
+        }
+        Iterator<Track> iterator = queue.iterator();
+        int i = 0;
+        while (iterator.hasNext() ) {
+            iterator.next();
+            if (i == (indexOf - 1)) {
+                break;
+            }
+            iterator.remove();
+            i++;
+        }
+        next();
+    }
+
     public synchronized void previous() {
         if (!history.isEmpty()) {
             Track track = history.removeFirst();
@@ -114,6 +139,5 @@ public class TrackQueue {
             trackMng.dispatchEvent(TrackEventCreator.currentPlayingIs(current));
         }
     }
-
 
 }

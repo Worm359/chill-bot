@@ -59,6 +59,18 @@ public class CliOption {
         id.addOption(optIdRequired);
     }
 
+    public static final Options urlAndShuffle;
+    public static final Option optUrlRequired;
+    public static final Option shuffle;
+    static {
+        urlAndShuffle = new Options();
+        optUrlRequired = new Option("url", true, "url with youtube playlist");
+        optUrlRequired.setRequired(true);
+        urlAndShuffle.addOption(optUrlRequired);
+        shuffle = new Option("s", "shuffle", false, "will shuffle youtube playlist, before adding adding tracks to queue");
+        urlAndShuffle.addOption(shuffle);
+    }
+
     public static final Options player;
     public static final Option optStop = new Option("s", "stop",false, "stop playing");
     public static final Option optStart = new Option("p", "play",false, "start playing");

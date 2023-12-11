@@ -9,7 +9,7 @@ import ru.worm.discord.chill.discord.Commands;
 @Service
 public class SwearListener extends MessageListener implements EventListener<MessageCreateEvent> {
     public SwearListener() {
-        this.command = Commands.TODO;
+        this.command = Commands.PING;
     }
 
     @Override

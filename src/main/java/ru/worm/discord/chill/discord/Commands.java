@@ -1,7 +1,7 @@
 package ru.worm.discord.chill.discord;
 
 public interface Commands {
-    public static String TODO = "todo";
+    public static String PING = "ping";
     public static String PLAY = "play";
     public static String DOWNLOAD_AND_PLAY = "f_play";
     public static String NEXT = "next";
@@ -12,7 +12,10 @@ public interface Commands {
     public static String GET_MERGED_PLAYLIST = "list_all";
     public static String PLAY_NEXT = "play_next";
     public static String PLAY_NOW = "play_now";
+    public static String PLAYLIST = "playlist";
     public static String REMOVE = "rmv";
+    public static String SKIP_TO = "skip_to";
+    public static String HELP = "help";
     public static String PLAYER = "player";
     //todo shuffle????
     public static String PLAY_FROM_FILE = "test_p";

@@ -7,6 +7,7 @@ import discord4j.core.event.domain.message.MessageCreateEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.discord.Commands;
@@ -23,11 +24,13 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 
 import static ru.worm.discord.chill.logic.AudioFilePath.trackFileWithExtension;
+import static ru.worm.discord.chill.util.Consts.DEV_PROFILE;
 
 /**
  * скачивает youtube аудио по ссылке (для каждого трека свой файл) и стримит в дискорд через LavaPlayer
  */
 @Service
+@Profile(DEV_PROFILE)
 public class PlayDownloadedListener extends MessageListener implements EventListener<MessageCreateEvent> {
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final TrackScheduler scheduler;

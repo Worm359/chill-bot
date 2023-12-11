@@ -3,6 +3,7 @@ package ru.worm.discord.chill.discord.listener;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.discord.Commands;
@@ -10,10 +11,13 @@ import ru.worm.discord.chill.lavaplayer.TrackScheduler;
 
 import java.util.Arrays;
 
+import static ru.worm.discord.chill.util.Consts.DEV_PROFILE;
+
 /**
  * пример проигрывание youtube через LavaPlayer по ссылке
  */
 @Service
+@Profile(DEV_PROFILE)
 public class PlayRemoteYtbLavaPlayerListener extends MessageListener implements EventListener<MessageCreateEvent> {
     private final AudioPlayerManager playerManager;
     private final TrackScheduler scheduler;

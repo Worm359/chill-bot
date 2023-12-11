@@ -6,6 +6,7 @@ import com.sedmelluq.discord.lavaplayer.tools.io.NonSeekableInputStream;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.discord.Commands;
@@ -18,10 +19,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
+import static ru.worm.discord.chill.util.Consts.DEV_PROFILE;
+
 /**
  * пример проигрывания файла с диска (hardcoded osip.opus в корне проекта)
  */
 @Service
+@Profile(DEV_PROFILE)
 public class TestLocalOpusListener extends MessageListener implements EventListener<MessageCreateEvent> {
     private final TrackScheduler scheduler;
 
