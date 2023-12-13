@@ -19,4 +19,5 @@ public interface Commands {
     public static String PLAYER = "player";
     public static String PLAY_FROM_FILE = "test_p";
     public static String JOIN = "join"; //todo automatically join when playing something...
+    public static String STAT = "status";
 }
