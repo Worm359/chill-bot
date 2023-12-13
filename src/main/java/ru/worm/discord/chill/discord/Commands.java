@@ -15,10 +15,8 @@ public interface Commands {
     public static String PLAYLIST = "playlist";
     public static String REMOVE = "rmv";
     public static String SKIP_TO = "skip_to";
-    //fixme when -h is present for non CLI command, default response
     public static String HELP = "help";
     public static String PLAYER = "player";
-    //todo shuffle????
     public static String PLAY_FROM_FILE = "test_p";
     public static String JOIN = "join"; //todo automatically join when playing something...
 }

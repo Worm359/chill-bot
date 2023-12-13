@@ -115,7 +115,6 @@ public class YtpDlpService {
         });
     }
 
-    //fixme if duration is not loadable, allow loading?
     private Optional<String> checkDuration(Track ytTrack) {
         String videoId = YoutubeUtil.stripVideoUrl(ytTrack.getUrl()).orElse(null);
         if (videoId == null) {
@@ -124,8 +123,8 @@ public class YtpDlpService {
         }
         Optional<Long> loadedDuration = durationService.videoMinutesLength(videoId);
         if (loadedDuration.isEmpty()) {
-            return Optional.of("failed to obtain %d %s video duration"
-                    .formatted(ytTrack.getId(), ytTrack.getUrl()));
+            log.warn("couldn't check {} {} duration. allowed loading.", ytTrack.getId(), ytTrack.getUrl());
+            return Optional.empty();
         }
         Long duration = loadedDuration.get();
         if (duration.compareTo(settings.getMaximumVideoLengthMinutes()) > 0) {

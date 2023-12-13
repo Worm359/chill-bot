@@ -21,15 +21,23 @@ public abstract class MessageListener implements IWithPrefix {
 
     public Mono<Message> filter(Message eventMessage) {
         return Mono.just(eventMessage)
-          .filter(message -> message.getAuthor().map(user -> !user.isBot()).orElse(false))
-          .filter(message -> {
-              String messageContent = message.getContent();
-              if (TextUtil.isEmpty(messageContent)) {
-                  return false;
-              }
-              String[] commandWords = messageContent.split(" ");
-              return commandWords[0].equalsIgnoreCase(commandName());
-          });
+                .filter(message -> message.getAuthor().map(user -> !user.isBot()).orElse(false))
+                .flatMap(message -> {
+                    String messageContent = message.getContent();
+                    if (TextUtil.isEmpty(messageContent)) {
+                        return Mono.empty();
+                    }
+                    String[] commandWords = messageContent.split(" ");
+                    if (!commandWords[0].equalsIgnoreCase(commandName())) {
+                        return Mono.empty();
+                    } else if (Arrays.stream(commandWords).anyMatch(s -> s.equalsIgnoreCase("-h") || s.equalsIgnoreCase("--help"))) {
+                        return eventMessage.getChannel()
+                                .flatMap(channel -> channel.createMessage("'" + commandName() + "' does not have any help info. you're on your own..."))
+                                .flatMap(response -> Mono.empty());
+                    } else {
+                        return Mono.just(message);
+                    }
+                });
     }
 
     protected Mono<Pair<Message, CommandLine>> filterWithOptions(Message eventMessage) {
