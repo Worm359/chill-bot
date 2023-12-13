@@ -7,8 +7,8 @@ import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.discord.Commands;
 
 @Service
-public class SwearListener extends MessageListener implements EventListener<MessageCreateEvent> {
-    public SwearListener() {
+public class PingListener extends MessageListener implements EventListener<MessageCreateEvent> {
+    public PingListener() {
         this.command = Commands.PING;
     }
 
