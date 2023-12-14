@@ -42,7 +42,7 @@ public class VideoMetadataService {
             YouTube.PlaylistItems.List request = youtube.playlistItems()
                 .list("contentDetails");
             PlaylistItemListResponse response = request.setKey(apiKey)
-                    .setMaxResults(25L)
+                    .setMaxResults(100L)
                     .setPlaylistId(playlistId)
                     .execute();
             if (response == null || response.getItems() == null || response.getItems().isEmpty()) {

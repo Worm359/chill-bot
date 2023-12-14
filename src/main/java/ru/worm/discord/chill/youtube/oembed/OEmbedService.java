@@ -44,7 +44,7 @@ public class OEmbedService {
             }
             return Optional.ofNullable(forEntity.getBody().getTitle());
         } catch (URISyntaxException | RestClientException e) {
-            log.error(ExceptionUtils.getStackTrace(e));
+            log.error("title loading for URL {} {}", url, ExceptionUtils.getStackTrace(e));
             return Optional.empty();
         }
     }
