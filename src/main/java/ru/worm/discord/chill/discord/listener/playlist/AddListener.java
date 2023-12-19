@@ -13,6 +13,7 @@ import ru.worm.discord.chill.discord.listener.MessageListener;
 import ru.worm.discord.chill.logic.command.CliOption;
 import ru.worm.discord.chill.logic.command.CliOptionValidation;
 import ru.worm.discord.chill.logic.command.IOptionValidator;
+import ru.worm.discord.chill.queue.TrackFactory;
 import ru.worm.discord.chill.queue.TrackQueue;
 import ru.worm.discord.chill.util.Pair;
 
@@ -23,10 +24,12 @@ import ru.worm.discord.chill.util.Pair;
 public class AddListener extends MessageListener implements EventListener<MessageCreateEvent> {
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final TrackQueue playlist;
+    private final TrackFactory trackFactory;
 
     @Autowired
-    public AddListener(TrackQueue playlist) {
+    public AddListener(TrackQueue playlist, TrackFactory trackFactory) {
         this.playlist = playlist;
+        this.trackFactory = trackFactory;
         this.command = Commands.ADD;
     }
 
@@ -38,7 +41,7 @@ public class AddListener extends MessageListener implements EventListener<Messag
     public Mono<Void> execute(MessageCreateEvent event) {
         return filterWithOptions(event.getMessage())
                 .map(p -> p.getSecond().getArgList().get(0))
-                .map(playlist::newTrack)
+                .flatMap(trackFactory::newTrack)
                 .doOnNext(playlist::add)
                 .then();
     }

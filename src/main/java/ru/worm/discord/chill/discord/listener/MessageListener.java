@@ -5,6 +5,8 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.discord.IWithPrefix;
 import ru.worm.discord.chill.logic.command.CliOption;
@@ -15,6 +17,7 @@ import ru.worm.discord.chill.util.TextUtil;
 import java.util.Arrays;
 
 public abstract class MessageListener implements IWithPrefix {
+    private final Logger log = LoggerFactory.getLogger(getClass());
     private final static DefaultParser parser = new DefaultParser();
     protected String botPrefix;
     protected String command;
@@ -32,7 +35,7 @@ public abstract class MessageListener implements IWithPrefix {
                         return Mono.empty();
                     } else if (Arrays.stream(commandWords).anyMatch(s -> s.equalsIgnoreCase("-h") || s.equalsIgnoreCase("--help"))) {
                         return eventMessage.getChannel()
-                                .flatMap(channel -> channel.createMessage("'" + commandName() + "' does not have any help info. you're on your own..."))
+                                .flatMap(channel -> channel.createMessage(helpMessage()))
                                 .flatMap(response -> Mono.empty());
                     } else {
                         return Mono.just(message);
@@ -88,5 +91,16 @@ public abstract class MessageListener implements IWithPrefix {
 
     protected Pair<Options, IOptionValidator> options() {
         return new Pair<>(null, null);
+    }
+
+    private String helpMessage() {
+        Options opts = options().getFirst();
+        String msg;
+        if (opts != null) {
+            msg = CliOption.help(commandName(), opts);
+        } else {
+            msg = "'" + commandName() + "' does not have any help info. you're on your own...";
+        }
+        return msg;
     }
 }

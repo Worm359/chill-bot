@@ -37,7 +37,7 @@ public class Orchestrator implements ITrackQSubscriber {
     @Override
     public void currentChanged(TrackEvent<Track> event) {
         Track track = event.getPayload();
-        log.info("track changed to id={} url={}", track.getId(), track.getUrl());
+        log.info("track changed to id={} url={}", track.getId(), track.getVideoId());
         Mono.just(storage.checkFilePresent(track.getId()))
                 .flatMap(present -> present ? Mono.empty() : downloader.loadAudio(track))
                 .doOnSuccess((v) -> scheduler.trackLoaded(getOggTrack(track)))

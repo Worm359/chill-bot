@@ -14,6 +14,7 @@ import ru.worm.discord.chill.logic.command.CliOption;
 import ru.worm.discord.chill.logic.command.IOptionValidator;
 import ru.worm.discord.chill.logic.command.validation.IdOrUrlValidator;
 import ru.worm.discord.chill.queue.Track;
+import ru.worm.discord.chill.queue.TrackFactory;
 import ru.worm.discord.chill.queue.TrackQueue;
 import ru.worm.discord.chill.util.Pair;
 
@@ -23,10 +24,12 @@ import java.util.Optional;
 public class PlayNowListener extends MessageListener implements EventListener<MessageCreateEvent> {
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final TrackQueue playlist;
+    private final TrackFactory trackFactory;
 
     @Autowired
-    public PlayNowListener(TrackQueue playlist) {
+    public PlayNowListener(TrackQueue playlist, TrackFactory trackFactory) {
         this.playlist = playlist;
+        this.trackFactory = trackFactory;
         this.command = Commands.PLAY_NOW;
     }
 
@@ -37,23 +40,26 @@ public class PlayNowListener extends MessageListener implements EventListener<Me
 
     public Mono<Void> execute(MessageCreateEvent event) {
         return filterWithOptions(event.getMessage())
-                .doOnNext(p -> {
+                .flatMap(p -> {
                     String url = p.getSecond().getOptionValue(CliOption.optUrl);
                     String id = p.getSecond().getOptionValue(CliOption.optId);
                     if (url != null) {
-                        playlist.playNow(playlist.newTrack(url));
+                        return trackFactory.newTrack(url);
                     } else {
-                        Optional<Track> trackFromPlaylist = playlist.getTrackById(Integer.valueOf(id));
-                        trackFromPlaylist.ifPresentOrElse(t -> {
-                                    playlist.remove(t.getId());
-                                    playlist.playNow(t);
-                                },
-                                () -> event.getMessage()
-                                        .getChannel()
-                                        .flatMap(ch -> ch.createMessage("id %s not found".formatted(id)))
-                                        .subscribe());
+                        Integer trackId = Integer.valueOf(id);
+                        Optional<Track> trackFromPlaylist = playlist.findTrackById(trackId);
+                        if (trackFromPlaylist.isEmpty()) {
+                            return event.getMessage()
+                                    .getChannel()
+                                    .flatMap(ch -> ch.createMessage("id %s not found".formatted(id)))
+                                    .then(Mono.empty());
+                        } else {
+                            playlist.remove(trackId);
+                            return Mono.just(trackFromPlaylist.get());
+                        }
                     }
                 })
+                .doOnNext(playlist::playNow)
                 .then();
     }
 

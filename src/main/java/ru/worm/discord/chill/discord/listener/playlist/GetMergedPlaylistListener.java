@@ -9,8 +9,6 @@ import ru.worm.discord.chill.discord.listener.EventListener;
 import ru.worm.discord.chill.discord.listener.MessageListener;
 import ru.worm.discord.chill.queue.Track;
 import ru.worm.discord.chill.queue.TrackQueue;
-import ru.worm.discord.chill.util.Pair;
-import ru.worm.discord.chill.youtube.oembed.TitleService;
 
 import java.util.Collections;
 import java.util.List;
@@ -23,12 +21,10 @@ import java.util.stream.Stream;
 @Service
 public class GetMergedPlaylistListener extends MessageListener implements EventListener<MessageCreateEvent> {
     private final TrackQueue playlist;
-    private final TitleService titleService;
 
     @Autowired
-    public GetMergedPlaylistListener(TrackQueue playlist, TitleService titleService) {
+    public GetMergedPlaylistListener(TrackQueue playlist) {
         this.playlist = playlist;
-        this.titleService = titleService;
         this.command = Commands.GET_MERGED_PLAYLIST;
     }
 
@@ -40,22 +36,20 @@ public class GetMergedPlaylistListener extends MessageListener implements EventL
     public Mono<Void> execute(MessageCreateEvent event) {
         AtomicInteger currentIndex = new AtomicInteger();
         return filter(event.getMessage())
-                .flatMap(m -> {
+                .map(m -> {
                     List<Track> history = playlist.getHistory();
                     Collections.reverse(history);
                     currentIndex.set(history.size());
                     List<Track> playing = playlist.getPlaylist();
-                    List<Track> merged = Stream.concat(history.stream(), playing.stream()).toList();
-                    return titleService.getTitles(merged);
+                    return Stream.concat(history.stream(), playing.stream()).toList();
                 })
-                .flatMap(m -> {
+                .flatMap(tracks -> {
                     int playingIndex = currentIndex.get();
                     StringBuilder hstMsg = new StringBuilder("```\n");
                     hstMsg.append("id\t\t\t\ttitle\n");
-                    for (int i = 0; i < m.size(); i++) {
-                        Pair<Track, String> trackWithTitle = m.get(i);
-                        Track track = trackWithTitle.getFirst();
-                        String title = trackWithTitle.getSecond();
+                    for (int i = 0; i < tracks.size(); i++) {
+                        Track track = tracks.get(i);
+                        String title = track.getTitle();
                         if (i == playingIndex) {
                             hstMsg.append(">");
                         } else {

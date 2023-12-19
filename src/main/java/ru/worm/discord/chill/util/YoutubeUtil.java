@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 public class YoutubeUtil {
     private static final Pattern ytbLinkSimple = Pattern.compile(
-            "youtu\\.be/([\\-0-9a-zA-Z]+)$"
+            "youtu\\.be/([\\-0-9a-zA-Z_]+)$"
     );
     private static final Pattern ytbLinkSecondGuess = Pattern.compile(
             "(?<=watch\\?v=|/videos/|embed\\/)[^#\\&\\?]*"
@@ -50,5 +50,10 @@ public class YoutubeUtil {
             return Optional.ofNullable(matcher.group(1));
         }
         return Optional.empty();
+    }
+
+    public static String urlForVideoId(String videoId) {
+        assert !TextUtil.isEmpty(videoId);
+        return "https://youtube.com/watch?v=%s".formatted(videoId);
     }
 }

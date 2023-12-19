@@ -22,17 +22,20 @@ public class TrackQueue {
         this.trackMng = trackMng;
     }
 
-    public synchronized Track newTrack(String url) {
+    public synchronized Optional<Track> findTrackByVideoId(String videoId) {
         return Stream.concat(history.stream(), queue.stream())
-                .filter(t -> t.getUrl().equals(url))
-                .findFirst()
-                .orElseGet(() -> new Track(url));
+                .filter(t -> t.getVideoId().equals(videoId))
+                .findFirst();
     }
 
-    public synchronized Optional<Track> getTrackById(Integer id) {
+    public synchronized Optional<Track> findTrackById(Integer id) {
         return Stream.concat(history.stream(), queue.stream())
                 .filter(t -> t.getId().equals(id))
                 .findFirst();
+    }
+
+    public synchronized List<Track> getAllKnownTracks() {
+        return Stream.concat(history.stream(), queue.stream()).toList();
     }
 
     public synchronized List<Track> getHistory() {
@@ -47,13 +50,13 @@ public class TrackQueue {
         log.debug("next() event");
         if (!queue.isEmpty() && current != null) { //skipCurrent &&
             Track lastPlayed = queue.remove();
-            log.debug("current track is {}, skipping it", lastPlayed.getUrl());
+            log.debug("current track is {}, skipping it", lastPlayed.getVideoId());
             addToHistory(lastPlayed);
         }
         if (!queue.isEmpty()) {
             Track next = queue.getFirst();
             current = next;
-            log.debug("current track {}", next.getUrl());
+            log.debug("current track {}", next.getVideoId());
             trackMng.dispatchEvent(TrackEventCreator.currentPlayingIs(current));
         } else {
             log.debug("no tracks left in queue");

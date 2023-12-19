@@ -13,7 +13,6 @@ import ru.worm.discord.chill.logic.locking.TrackCashState;
 import ru.worm.discord.chill.logic.locking.TrackLoadLocker;
 import ru.worm.discord.chill.queue.Track;
 import ru.worm.discord.chill.util.YoutubeUtil;
-import ru.worm.discord.chill.youtube.api.VideoMetadataService;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -28,7 +27,6 @@ public class YtpDlpService {
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final TrackLoadLocker locker;
     private final LoadEventHandler loadingEventMng;
-    private VideoMetadataService durationService;
     private final YoutubeSetting settings;
 
     @Autowired
@@ -38,11 +36,6 @@ public class YtpDlpService {
         this.locker = locker;
         this.loadingEventMng = loadingEventMng;
         this.settings = settings.getYoutube();
-    }
-
-    @Autowired(required = false)
-    public void setDurationService(VideoMetadataService durationService) {
-        this.durationService = durationService;
     }
 
     public Mono<Void> loadAudio(Track ytTrack) {
@@ -69,7 +62,7 @@ public class YtpDlpService {
                         loadingEventMng.registerCallback(ytTrack.getId(), callback);
                         return;
                     } else if (state == TrackCashState.error || state == TrackCashState.deleted) {
-                        sink.error(new RuntimeException("couldn't load " + ytTrack.getUrl()));
+                        sink.error(new RuntimeException("couldn't load " + ytTrack.getVideoId()));
                         return;
                     } else if (state == TrackCashState.idle) {
                         trackLock.loading();
@@ -77,19 +70,19 @@ public class YtpDlpService {
                 }
                 //fixme HTTP operation inside create -> refactor?
                 //video duration check
-                if (durationService != null) {
+//                if (durationService != null) {
                     Optional<String> err = checkDuration(ytTrack);
                     if (err.isPresent()) {
                         processError.accept(err.get());
                         return;
                     }
-                }
+//                }
                 //process building
                 ProcessBuilder pb = new ProcessBuilder("yt-dlp.exe",
                         "-x",
                         "-o", trackFile(ytTrack),
                         "--no-playlist",
-                        ytTrack.getUrl());
+                        YoutubeUtil.urlForVideoId(ytTrack.getVideoId()));
                 pb.inheritIO();
                 Process ytpDlpProcess = pb.start();
                 //process -> future
@@ -105,7 +98,7 @@ public class YtpDlpService {
                             sink.success();
                         } else {
                             //lock#timeRequested was just updated. no need to check deleted state
-                            processError.accept("couldn't load " + ytTrack.getUrl());
+                            processError.accept("couldn't load " + ytTrack.getVideoId());
                         }
                     }
                 });
@@ -116,22 +109,17 @@ public class YtpDlpService {
     }
 
     private Optional<String> checkDuration(Track ytTrack) {
-        String videoId = YoutubeUtil.stripVideoUrl(ytTrack.getUrl()).orElse(null);
-        if (videoId == null) {
-            return Optional.of("failed to strip %d %s video id"
-                    .formatted(ytTrack.getId(), ytTrack.getUrl()));
-        }
-        Optional<Long> loadedDuration = durationService.videoMinutesLength(videoId);
-        if (loadedDuration.isEmpty()) {
-            log.warn("couldn't check {} {} duration. allowed loading.", ytTrack.getId(), ytTrack.getUrl());
+        if (ytTrack.getDuration() == null) {
+            log.warn("couldn't check {} {} duration. allowed loading.", ytTrack.getId(), ytTrack.getVideoId());
+            return Optional.empty();
+        } else {
+            Long duration = ytTrack.getDuration().toMinutes();
+            if (duration.compareTo(settings.getMaximumVideoLengthMinutes()) > 0) {
+                return Optional.of("%d %s duration %d min. is more than %d min. skip downloading."
+                        .formatted(ytTrack.getId(), ytTrack.getVideoId(), duration, settings.getMaximumVideoLengthMinutes()));
+            }
+            log.debug("{} {} duration is {} min. OK", ytTrack.getId(), ytTrack.getVideoId(), duration);
             return Optional.empty();
         }
-        Long duration = loadedDuration.get();
-        if (duration.compareTo(settings.getMaximumVideoLengthMinutes()) > 0) {
-            return Optional.of("%d %s duration %d min. is more than %d min. skip downloading."
-                    .formatted(ytTrack.getId(), ytTrack.getUrl(), duration, settings.getMaximumVideoLengthMinutes()));
-        }
-        log.debug("{} {} duration is {} min. OK", ytTrack.getId(), ytTrack.getUrl(), duration);
-        return Optional.empty();
     }
 }

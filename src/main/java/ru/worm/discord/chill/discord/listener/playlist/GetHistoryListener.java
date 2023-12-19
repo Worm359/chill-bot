@@ -9,8 +9,6 @@ import ru.worm.discord.chill.discord.listener.EventListener;
 import ru.worm.discord.chill.discord.listener.MessageListener;
 import ru.worm.discord.chill.queue.Track;
 import ru.worm.discord.chill.queue.TrackQueue;
-import ru.worm.discord.chill.util.Pair;
-import ru.worm.discord.chill.youtube.oembed.TitleService;
 
 /**
  * выводит id/title из истории
@@ -18,12 +16,10 @@ import ru.worm.discord.chill.youtube.oembed.TitleService;
 @Service
 public class GetHistoryListener extends MessageListener implements EventListener<MessageCreateEvent> {
     private final TrackQueue playlist;
-    private final TitleService titleService;
 
     @Autowired
-    public GetHistoryListener(TrackQueue playlist, TitleService titleService) {
+    public GetHistoryListener(TrackQueue playlist) {
         this.playlist = playlist;
-        this.titleService = titleService;
         this.command = Commands.GET_HISTORY;
     }
 
@@ -34,13 +30,12 @@ public class GetHistoryListener extends MessageListener implements EventListener
 
     public Mono<Void> execute(MessageCreateEvent event) {
         return filter(event.getMessage())
-                .flatMap(m -> titleService.getTitles(playlist.getHistory()))
-                .flatMap(m -> {
+                .map(m -> playlist.getHistory())
+                .flatMap(tracks -> {
                     StringBuilder hstMsg = new StringBuilder("```\n");
                     hstMsg.append("id\t\t\t\ttitle\n");
-                    for (Pair<Track, String> trackWithTitle : m) {
-                        Track track = trackWithTitle.getFirst();
-                        String title = trackWithTitle.getSecond();
+                    for (Track track : tracks) {
+                        String title = track.getTitle();
                         hstMsg.append(track.getId())
                                 .append("\t\t\t\t")
                                 .append(title)

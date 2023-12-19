@@ -13,24 +13,23 @@ import ru.worm.discord.chill.discord.listener.MessageListener;
 import ru.worm.discord.chill.logic.command.CliOption;
 import ru.worm.discord.chill.logic.command.IOptionValidator;
 import ru.worm.discord.chill.logic.command.validation.UrlValidator;
+import ru.worm.discord.chill.queue.TrackFactory;
 import ru.worm.discord.chill.queue.TrackQueue;
 import ru.worm.discord.chill.util.Pair;
 import ru.worm.discord.chill.util.YoutubeUtil;
-import ru.worm.discord.chill.youtube.api.VideoMetadataService;
 
 import java.util.Collections;
-import java.util.List;
 
 @Service
 public class AddYoutubePlaylist extends MessageListener implements EventListener<MessageCreateEvent> {
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final TrackQueue playlist;
-    private final VideoMetadataService youtube;
+    private final TrackFactory trackFactory;
 
     @Autowired
-    public AddYoutubePlaylist(TrackQueue playlist, VideoMetadataService youtube) {
+    public AddYoutubePlaylist(TrackQueue playlist, TrackFactory trackFactory) {
         this.playlist = playlist;
-        this.youtube = youtube;
+        this.trackFactory = trackFactory;
         this.command = Commands.PLAYLIST;
     }
 
@@ -51,15 +50,17 @@ public class AddYoutubePlaylist extends MessageListener implements EventListener
                         return Mono.just(new Pair<>(playlistId, shuffle));
                     }
                 })
-                .doOnNext(p -> {
+                .flatMap(p -> {
                     String playlistId = p.getFirst();
                     Boolean shuffle = p.getSecond();
-                    List<String> videos = youtube.getVideoUrls(playlistId);
-                    if (shuffle) {
-                        Collections.shuffle(videos);
-                    }
-                    videos.forEach(v -> playlist.add(playlist.newTrack(v)));
+                    return trackFactory
+                            .newTracks(playlistId)
+                            .map(tracks -> {
+                                if (shuffle) Collections.shuffle(tracks);
+                                return tracks;
+                            });
                 })
+                .doOnNext(tracks -> tracks.forEach(playlist::add))
                 .onErrorResume(throwable -> event.getMessage().getChannel()
                         .flatMap(channel -> channel.createMessage(throwable.getMessage()))
                         .flatMap(response -> Mono.empty()))

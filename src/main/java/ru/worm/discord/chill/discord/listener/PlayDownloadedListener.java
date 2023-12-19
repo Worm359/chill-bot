@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.Arrays;
 
 import static ru.worm.discord.chill.logic.AudioFilePath.trackFileWithExtension;
@@ -53,7 +54,7 @@ public class PlayDownloadedListener extends MessageListener implements EventList
                 .flatMap(m -> Mono.justOrEmpty(m.getContent()))
                 .map(content -> Arrays.asList(content.split(" ")))
                 .flatMap(command -> {
-                    Track track = new Track(command.get(1));
+                    Track track = new Track(command.get(1), "unknown - unknown", Duration.ofMinutes(2));
                     return ytpDl.loadAudio(track)
                             .doOnSuccess((v) -> scheduler.trackLoaded(getOggTrack(track)));
                 })

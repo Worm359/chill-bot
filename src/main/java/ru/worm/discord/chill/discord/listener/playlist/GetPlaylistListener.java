@@ -9,8 +9,6 @@ import ru.worm.discord.chill.discord.listener.EventListener;
 import ru.worm.discord.chill.discord.listener.MessageListener;
 import ru.worm.discord.chill.queue.Track;
 import ru.worm.discord.chill.queue.TrackQueue;
-import ru.worm.discord.chill.util.Pair;
-import ru.worm.discord.chill.youtube.oembed.TitleService;
 
 /**
  * выводит id/title из плейлиста
@@ -18,12 +16,10 @@ import ru.worm.discord.chill.youtube.oembed.TitleService;
 @Service
 public class GetPlaylistListener extends MessageListener implements EventListener<MessageCreateEvent> {
     private final TrackQueue playlist;
-    private final TitleService titleService;
 
     @Autowired
-    public GetPlaylistListener(TrackQueue playlist, TitleService titleService) {
+    public GetPlaylistListener(TrackQueue playlist) {
         this.playlist = playlist;
-        this.titleService = titleService;
         this.command = Commands.GET_PLAYING;
     }
 
@@ -34,16 +30,15 @@ public class GetPlaylistListener extends MessageListener implements EventListene
 
     public Mono<Void> execute(MessageCreateEvent event) {
         return filter(event.getMessage())
-                .flatMap(m -> titleService.getTitles(playlist.getPlaylist()))
-                .flatMap(m -> {
+                .map(m -> playlist.getPlaylist())
+                .flatMap(tracks -> {
                     StringBuilder hstMsg = new StringBuilder("```\n");
                     hstMsg.append("id\t\t\t\ttitle\n");
                     hstMsg.append(">");
-                    for (int i = 0; i < m.size(); i++) {
+                    for (int i = 0; i < tracks.size(); i++) {
                         if (i != 0) hstMsg.append("*");
-                        Pair<Track, String> trackWithTitle = m.get(i);
-                        Track track = trackWithTitle.getFirst();
-                        String title = trackWithTitle.getSecond();
+                        Track track = tracks.get(i);
+                        String title = track.getTitle();
                         hstMsg.append(track.getId())
                                 .append("\t\t\t\t")
                                 .append(title)

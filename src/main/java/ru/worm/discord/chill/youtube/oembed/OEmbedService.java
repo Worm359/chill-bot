@@ -28,7 +28,7 @@ public class OEmbedService {
         this.restTemplate = restTemplate;
     }
 
-    Optional<String> title(String url) {
+    public Optional<String> title(String url) {
         try {
             String oembedEndpoint = "https://www.youtube.com/oembed?url=%s&format=json"
                     .formatted(URLEncoder.encode(url, StandardCharsets.UTF_8));
