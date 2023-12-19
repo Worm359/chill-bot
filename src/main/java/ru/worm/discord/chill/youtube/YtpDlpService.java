@@ -62,7 +62,7 @@ public class YtpDlpService {
                         loadingEventMng.registerCallback(ytTrack.getId(), callback);
                         return;
                     } else if (state == TrackCashState.error || state == TrackCashState.deleted) {
-                        sink.error(new RuntimeException("couldn't load " + ytTrack.getVideoId()));
+                        sink.error(new RuntimeException("couldn't load " + ytTrack));
                         return;
                     } else if (state == TrackCashState.idle) {
                         trackLock.loading();
@@ -95,7 +95,7 @@ public class YtpDlpService {
                             sink.success();
                         } else {
                             //lock#timeRequested was just updated. no need to check deleted state
-                            processError.accept("couldn't load " + ytTrack.getVideoId());
+                            processError.accept("couldn't load " + ytTrack);
                         }
                     }
                 });
@@ -107,15 +107,16 @@ public class YtpDlpService {
 
     private Optional<String> checkDuration(Track ytTrack) {
         if (ytTrack.getDuration() == null) {
-            log.warn("couldn't check {} {} duration. allowed loading.", ytTrack.getId(), ytTrack.getVideoId());
+            log.warn("couldn't check {} duration. allowed loading.", ytTrack);
             return Optional.empty();
         } else {
             Long duration = ytTrack.getDuration().toMinutes();
             if (duration.compareTo(settings.getMaximumVideoLengthMinutes()) > 0) {
-                return Optional.of("%d %s duration %d min. is more than %d min. skip downloading."
-                        .formatted(ytTrack.getId(), ytTrack.getVideoId(), duration, settings.getMaximumVideoLengthMinutes()));
+                return Optional.of("%s. duration is more than %d min. skip downloading.".formatted(
+                        ytTrack.toString(), settings.getMaximumVideoLengthMinutes())
+                );
             }
-            log.debug("{} {} duration is {} min. OK", ytTrack.getId(), ytTrack.getVideoId(), duration);
+            log.debug("{} duration check OK.", ytTrack);
             return Optional.empty();
         }
     }

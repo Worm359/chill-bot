@@ -50,13 +50,13 @@ public class TrackQueue {
         log.debug("next() event");
         if (!queue.isEmpty() && current != null) { //skipCurrent &&
             Track lastPlayed = queue.remove();
-            log.debug("current track is {}, skipping it", lastPlayed.getVideoId());
+            log.debug("current track is {}, skipping it", lastPlayed);
             addToHistory(lastPlayed);
         }
         if (!queue.isEmpty()) {
             Track next = queue.getFirst();
             current = next;
-            log.debug("current track {}", next.getVideoId());
+            log.debug("current track {}", next);
             trackMng.dispatchEvent(TrackEventCreator.currentPlayingIs(current));
         } else {
             log.debug("no tracks left in queue");

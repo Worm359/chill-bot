@@ -37,4 +37,14 @@ public class Track {
     public Integer getId() {
         return id;
     }
+
+    @Override
+    public String toString() {
+        return "Track{" +
+                "id=" + id +
+                ", title='" + title + '\'' +
+                ", videoId='" + videoId + '\'' +
+                ", duration=" + (duration != null ? duration.toMinutes() : null) + " min." +
+                '}';
+    }
 }
