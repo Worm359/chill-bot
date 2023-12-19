@@ -68,15 +68,12 @@ public class YtpDlpService {
                         trackLock.loading();
                     }
                 }
-                //fixme HTTP operation inside create -> refactor?
                 //video duration check
-//                if (durationService != null) {
-                    Optional<String> err = checkDuration(ytTrack);
-                    if (err.isPresent()) {
-                        processError.accept(err.get());
-                        return;
-                    }
-//                }
+                Optional<String> err = checkDuration(ytTrack);
+                if (err.isPresent()) {
+                    processError.accept(err.get());
+                    return;
+                }
                 //process building
                 ProcessBuilder pb = new ProcessBuilder("yt-dlp.exe",
                         "-x",
