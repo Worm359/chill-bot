@@ -76,7 +76,6 @@ public class TrackFactory {
                                     return Stream.empty();
                                 }
                                 Track oldTrack = knownTracks.get(videoId);
-                                //fixme -> too old track will be in 'deleted' status???
                                 if (oldTrack != null) {
                                     return Stream.of(oldTrack);
                                 }
