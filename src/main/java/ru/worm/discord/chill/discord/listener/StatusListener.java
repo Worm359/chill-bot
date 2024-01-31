@@ -1,23 +1,24 @@
-package ru.worm.discord.chill.discord.listener.playlist;
+package ru.worm.discord.chill.discord.listener;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.discord.Commands;
-import ru.worm.discord.chill.discord.listener.EventListener;
-import ru.worm.discord.chill.discord.listener.MessageListener;
 
 import java.time.Duration;
 import java.time.Instant;
 
 @Service
 public class StatusListener extends MessageListener implements EventListener<MessageCreateEvent> {
-    private final Instant listenerCreated;
+    private final Instant launchTimestamp;
+    private final BotLockListener lockListener;
 
-    public StatusListener() {
+    public StatusListener(@Qualifier("launchTimestamp") Instant launchTimestamp, BotLockListener lockListener) {
+        this.lockListener = lockListener;
         this.command = Commands.STAT;
-        this.listenerCreated = Instant.now();
+        this.launchTimestamp = launchTimestamp;
     }
 
     @Override
@@ -40,7 +41,8 @@ public class StatusListener extends MessageListener implements EventListener<Mes
 
 
     private String uptime() {
-        Duration uptime = Duration.between(listenerCreated, Instant.now());
+        Duration uptime = Duration.between(launchTimestamp, Instant.now());
+        lockListener.setLastDurationChecked(uptime);
         return "%d days (%02d hr %02d min %02d sec)".formatted(
                 uptime.toDays(),
                 uptime.toHours(),

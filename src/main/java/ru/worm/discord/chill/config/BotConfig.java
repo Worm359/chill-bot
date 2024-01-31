@@ -11,6 +11,8 @@ import org.springframework.context.annotation.DependsOn;
 import ru.worm.discord.chill.config.settings.RootSettings;
 import ru.worm.discord.chill.util.ExceptionUtils;
 
+import java.time.Instant;
+
 @Configuration
 public class BotConfig {
     private final Logger log = LoggerFactory.getLogger(getClass());
@@ -39,5 +41,10 @@ public class BotConfig {
         }
         log.info("successfully connected to discord gateway");
         return discord;
+    }
+
+    @Bean("launchTimestamp")
+    public Instant launchTimestamp() {
+        return Instant.now();
     }
 }

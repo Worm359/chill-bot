@@ -59,6 +59,7 @@ public class JoinListener extends MessageListener implements EventListener<Messa
                         if (currentVoiceConnection != null) {
                             audioPlayer.setPaused(true);
                             disconnect = currentVoiceConnection.disconnect();
+                            this.currentVoiceConnection = null; //?
                         }
                     }
                     return disconnect.then(
@@ -73,7 +74,7 @@ public class JoinListener extends MessageListener implements EventListener<Messa
                             .doFinally(sig -> {
                                 synchronized (locker) {
                                     locker.isLoading = false;
-                                    audioPlayer.setPaused(false);
+                                    audioPlayer.setPaused(false); //fixme slow start...?
                                 }
                             });
                 })
