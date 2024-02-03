@@ -2,8 +2,10 @@ package ru.worm.discord.chill.config.settings;
 
 public class YoutubeSetting {
     private String apiKey;
+    @Deprecated
     private Boolean disabled = false;
     private Long maximumVideoLengthMinutes = 25L;
+    private String ytpDlpBin;
 
     public String getApiKey() {
         return apiKey;
@@ -27,5 +29,13 @@ public class YoutubeSetting {
 
     public void setMaximumVideoLengthMinutes(Long maximumVideoLengthMinutes) {
         this.maximumVideoLengthMinutes = maximumVideoLengthMinutes;
+    }
+
+    public String getYtpDlpBin() {
+        return ytpDlpBin;
+    }
+
+    public void setYtpDlpBin(String ytpDlpBin) {
+        this.ytpDlpBin = ytpDlpBin;
     }
 }

@@ -75,7 +75,7 @@ public class YtpDlpService {
                     return;
                 }
                 //process building
-                ProcessBuilder pb = new ProcessBuilder("yt-dlp.exe",
+                ProcessBuilder pb = new ProcessBuilder(settings.getYtpDlpBin(),
                         "-x",
                         "-o", trackFile(ytTrack),
                         "--no-playlist",
