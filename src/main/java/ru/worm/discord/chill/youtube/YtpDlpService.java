@@ -107,8 +107,8 @@ public class YtpDlpService {
 
     private Optional<String> checkDuration(Track ytTrack) {
         if (ytTrack.getDuration() == null) {
-            log.warn("couldn't check {} duration. allowed loading.", ytTrack);
-            return Optional.empty();
+            log.warn("couldn't check {} duration (was not loaded for track).", ytTrack);
+            return Optional.of("%s. duration is null".formatted(ytTrack.toString()));
         } else {
             Long duration = ytTrack.getDuration().toMinutes();
             if (duration.compareTo(settings.getMaximumVideoLengthMinutes()) > 0) {
