@@ -6,6 +6,7 @@ import discord4j.core.object.entity.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.discord.Commands;
+import ru.worm.discord.chill.discord.GuildObserver;
 import ru.worm.discord.chill.util.TextUtil;
 
 import java.time.Duration;
@@ -55,11 +56,11 @@ public class BotLockListener extends MessageListener implements EventListener<Me
                             if (guildId.isEmpty()) {
                                 return channel.createMessage("sorry, no guildId");
                             } else {
-                                MessageListener.guildIdLock = guildId.get().asLong();
+                                GuildObserver.guildIdLock = guildId.get().asLong();
                                 return channel.createMessage("locked.");
                             }
                         } else {
-                            MessageListener.guildIdLock = null;
+                            GuildObserver.guildIdLock = null;
                             return channel.createMessage("unlocked.");
                         }
                     } else {

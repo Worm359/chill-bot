@@ -1,15 +1,12 @@
 package ru.worm.discord.chill.discord.listener;
 
-import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
-import ru.worm.discord.chill.discord.Commands;
+import ru.worm.discord.chill.discord.GuildObserver;
 import ru.worm.discord.chill.discord.IWithPrefix;
 import ru.worm.discord.chill.logic.command.CliOption;
 import ru.worm.discord.chill.logic.command.IOptionValidator;
@@ -17,11 +14,8 @@ import ru.worm.discord.chill.util.Pair;
 import ru.worm.discord.chill.util.TextUtil;
 
 import java.util.Arrays;
-import java.util.Objects;
 
 public abstract class MessageListener implements IWithPrefix {
-    protected static volatile Long guildIdLock;
-    private final Logger log = LoggerFactory.getLogger(getClass());
     private final static DefaultParser parser = new DefaultParser();
     protected String botPrefix;
     protected String command;
@@ -42,8 +36,11 @@ public abstract class MessageListener implements IWithPrefix {
                                 .flatMap(channel -> channel.createMessage(helpMessage()))
                                 .flatMap(response -> Mono.empty());
                     } else {
-                        if (isWrongGuildId(message)) {
+                        if (GuildObserver.isLockedToAnotherGuildId(message, command)) {
                             return handleWrongGuildId(message).then(Mono.empty());
+                        }
+                        if (GuildObserver.modeMismatch(message)) {
+                            return Mono.empty();
                         }
                         return Mono.just(message);
                     }
@@ -69,8 +66,11 @@ public abstract class MessageListener implements IWithPrefix {
                         CommandLine parse = parser.parse(opts,
                                 Arrays.copyOfRange(commandWords, 1, commandWords.length));
                         if (val != null) val.validate(parse);
-                        if (isWrongGuildId(message)) {
+                        if (GuildObserver.isLockedToAnotherGuildId(message, command)) {
                             return handleWrongGuildId(message).then(Mono.empty());
+                        }
+                        if (GuildObserver.modeMismatch(message)) {
+                            return Mono.empty();
                         }
                         return Mono.just(new Pair<>(message, parse));
                     } catch (ParseException e) {
@@ -93,21 +93,6 @@ public abstract class MessageListener implements IWithPrefix {
         return message.getChannel()
                 .flatMap(channel -> channel.createMessage("sorry, bot is locked to another guildId"))
                 .then(Mono.empty());
-    }
-    private boolean isWrongGuildId(Message message) {
-        if (command.equalsIgnoreCase(Commands.LOCK) || command.equalsIgnoreCase(Commands.STAT)) {
-            return false;
-        }
-        Long tmpGuildLock;
-        if ((tmpGuildLock = guildIdLock) != null) {
-            Long msgGuildId = message.getGuildId()
-                    .map(Snowflake::asLong)
-                    .orElse(null);
-            log.debug("guildIdLock={} message.guildId={}", tmpGuildLock, msgGuildId);
-            return !Objects.equals(tmpGuildLock, msgGuildId);
-
-        }
-        return false;
     }
 
     @Override
