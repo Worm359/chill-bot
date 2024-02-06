@@ -1,83 +1,105 @@
 package ru.worm.discord.chill.discord.listener;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
-import discord4j.core.event.domain.message.MessageCreateEvent;
-import discord4j.core.object.VoiceState;
-import discord4j.core.object.entity.Member;
-import discord4j.core.spec.VoiceChannelJoinSpec;
-import discord4j.voice.AudioProvider;
-import discord4j.voice.VoiceConnection;
+import net.dv8tion.jda.api.audio.SpeakingMode;
+import net.dv8tion.jda.api.entities.GuildVoiceState;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.channel.ChannelType;
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.managers.AudioManager;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.discord.Commands;
+import ru.worm.discord.chill.lavaplayer.LavaPlayerAudioProvider;
+import ru.worm.discord.chill.util.ExceptionUtils;
 
-import java.time.Duration;
+import javax.annotation.Nonnull;
+import java.util.Optional;
 
 @Service
-public class JoinListener extends MessageListener implements EventListener<MessageCreateEvent> {
-    private final AudioProvider lavaAudioProvider;
+public class JoinListener extends MessageListener implements EventListener {
     private final AudioPlayer audioPlayer;
     private final Locker locker = new Locker();
-    private VoiceConnection currentVoiceConnection = null;
+    private AudioManager currentManager;
+    private final LavaPlayerAudioProvider mySendHandler;
 
     /**
      * реализовать AudioProvider самому не получилось, см. ru.worm.discord.chill.ffmpeg.FfmpegAudioProvider
      */
     @Autowired
-    public JoinListener(@Qualifier("lavaAudioProvider") AudioProvider lavaAudioProvider, AudioPlayer audioPlayer) {
+    public JoinListener(AudioPlayer audioPlayer, LavaPlayerAudioProvider mySendHandler) {
         this.audioPlayer = audioPlayer;
+        this.mySendHandler = mySendHandler;
         this.command = Commands.JOIN;
-        this.lavaAudioProvider = lavaAudioProvider;
     }
 
-    @Override
-    public Class<MessageCreateEvent> getEventType() {
-        return MessageCreateEvent.class;
-    }
 
     private static class Locker {
         private boolean isLoading = false;
     }
 
-    public Mono<Void> execute(MessageCreateEvent event) {
-        return filter(event.getMessage())
-                .map(m -> event)
-                .flatMap(e -> Mono.justOrEmpty(e.getMember()))
-                .flatMap(Member::getVoiceState)
-                .flatMap(VoiceState::getChannel)
-                .flatMap(channel -> {
-                    Mono<Void> disconnect = Mono.empty();
-                    synchronized (locker) {
-                        if (locker.isLoading) {
-                            return event.getMessage()
-                                    .getChannel()
-                                    .map(ch -> ch.createMessage("sorry. already processing another join"));
-                        }
-                        locker.isLoading = true;
-                        if (currentVoiceConnection != null) {
-                            audioPlayer.setPaused(true);
-                            disconnect = currentVoiceConnection.disconnect();
-                            this.currentVoiceConnection = null; //?
-                        }
-                    }
-                    return disconnect.then(
-                                    channel.join(VoiceChannelJoinSpec.builder()
-                                                    .provider(lavaAudioProvider)
-                                                    .selfDeaf(false)
-                                                    .selfMute(false)
-                                                    .timeout(Duration.ofMinutes(1L))
-                                                    .ipDiscoveryTimeout(Duration.ofSeconds(10))
-                                                    .build())
-                                            .doOnNext(vc -> this.currentVoiceConnection = vc))
-                            .doFinally(sig -> {
-                                synchronized (locker) {
-                                    locker.isLoading = false;
-                                    audioPlayer.setPaused(false); //fixme slow start...?
-                                }
-                            });
-                })
-                .then();
+    @Override
+    public void onMessageReceived(@Nonnull MessageReceivedEvent event) {
+        if (!filter(event)) {
+            return;
+        }
+        Optional<String> voiceValidError = validateVoiceState(event);
+        if (voiceValidError.isPresent()) {
+            answer(event, voiceValidError.get());
+            return;
+        }
+        @SuppressWarnings("ConstantConditions")
+        VoiceChannel voiceChannel = event.getMember()
+            .getVoiceState()
+            .getChannel()
+            .asVoiceChannel();
+        synchronized (locker) {
+            if (locker.isLoading) {
+                answer(event, "sorry. already processing another join");
+                return;
+            }
+            locker.isLoading = true;
+            if (currentManager != null) {
+                audioPlayer.setPaused(true);
+                currentManager.closeAudioConnection();
+                this.currentManager = null;
+            }
+        }
+        boolean wasConnectionErr = false;
+        try {
+            currentManager = voiceChannel.getGuild().getAudioManager();
+            currentManager.setSendingHandler(mySendHandler);
+            currentManager.setSelfDeafened(false);
+            currentManager.setSelfMuted(false);
+            currentManager.setSpeakingMode(SpeakingMode.VOICE);
+            currentManager.openAudioConnection(voiceChannel);
+        } catch (Throwable e) {
+          log.error("{}", ExceptionUtils.getStackTrace(e));
+          wasConnectionErr = true;
+        } finally {
+            synchronized (locker) {
+                locker.isLoading = false;
+                audioPlayer.setPaused(wasConnectionErr);
+            }
+        }
+    }
+
+    private Optional<String> validateVoiceState(MessageReceivedEvent event) {
+        Member member = event.getMember();
+        if (member == null) {
+            return Optional.of("sorry, cannot determine user");
+        }
+
+        GuildVoiceState voiceState = member.getVoiceState();
+        if (voiceState == null) {
+            return Optional.of("sorry, %s is not connected to voice".formatted(member.getNickname()));
+        }
+
+        if (voiceState.getChannel() == null || !ChannelType.VOICE.equals(voiceState.getChannel().getType())) {
+            return Optional.of("sorry, %s is not connected to voice".formatted(member.getNickname()));
+        }
+
+        return Optional.empty();
     }
 }

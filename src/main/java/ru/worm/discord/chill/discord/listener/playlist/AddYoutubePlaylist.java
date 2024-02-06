@@ -1,12 +1,10 @@
 package ru.worm.discord.chill.discord.listener.playlist;
 
-import discord4j.core.event.domain.message.MessageCreateEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.discord.Commands;
 import ru.worm.discord.chill.discord.listener.EventListener;
 import ru.worm.discord.chill.discord.listener.MessageListener;
@@ -15,14 +13,15 @@ import ru.worm.discord.chill.logic.command.IOptionValidator;
 import ru.worm.discord.chill.logic.command.validation.UrlValidator;
 import ru.worm.discord.chill.queue.TrackFactory;
 import ru.worm.discord.chill.queue.TrackQueue;
+import ru.worm.discord.chill.util.AsyncUtil;
 import ru.worm.discord.chill.util.Pair;
 import ru.worm.discord.chill.util.YoutubeUtil;
 
+import javax.annotation.Nonnull;
 import java.util.Collections;
 
 @Service
-public class AddYoutubePlaylist extends MessageListener implements EventListener<MessageCreateEvent> {
-    private final Logger log = LoggerFactory.getLogger(getClass());
+public class AddYoutubePlaylist extends MessageListener implements EventListener {
     private final TrackQueue playlist;
     private final TrackFactory trackFactory;
 
@@ -34,37 +33,26 @@ public class AddYoutubePlaylist extends MessageListener implements EventListener
     }
 
     @Override
-    public Class<MessageCreateEvent> getEventType() {
-        return MessageCreateEvent.class;
-    }
-
-    public Mono<Void> execute(MessageCreateEvent event) {
-        return filterWithOptions(event.getMessage())
-                .flatMap(p -> {
-                    String url = p.getSecond().getOptionValue(CliOption.optUrlRequired);
-                    Boolean shuffle = p.getSecond().hasOption(CliOption.shuffle);
-                    String playlistId = YoutubeUtil.stripPlaylistId(url).orElse(null);
-                    if (playlistId == null) {
-                        return Mono.error(new RuntimeException("couldn't extract playlist id from " + url));
-                    } else {
-                        return Mono.just(new Pair<>(playlistId, shuffle));
-                    }
-                })
-                .flatMap(p -> {
-                    String playlistId = p.getFirst();
-                    Boolean shuffle = p.getSecond();
-                    return trackFactory
-                            .newTracks(playlistId)
-                            .map(tracks -> {
-                                if (shuffle) Collections.shuffle(tracks);
-                                return tracks;
-                            });
-                })
-                .doOnNext(tracks -> tracks.forEach(playlist::add))
-                .onErrorResume(throwable -> event.getMessage().getChannel()
-                        .flatMap(channel -> channel.createMessage(throwable.getMessage()))
-                        .flatMap(response -> Mono.empty()))
-                .then();
+    public void onMessageReceived(@Nonnull MessageReceivedEvent event) {
+        CommandLine cli = filterWithOptions(event).orElse(null);
+        if (cli == null) {
+            return;
+        }
+        String url = cli.getOptionValue(CliOption.optUrlRequired);
+        boolean shuffle = cli.hasOption(CliOption.shuffle);
+        String playlistId = YoutubeUtil.stripPlaylistId(url).orElse(null);
+        if (playlistId == null) {
+            answer(event, "couldn't extract playlist id from " + url);
+            return;
+        }
+        async(() -> trackFactory.obtainTracks(playlistId))
+            .thenAccept(tracks -> {
+                if (shuffle) {
+                    Collections.shuffle(tracks);
+                }
+                tracks.forEach(playlist::add);
+            })
+            .exceptionally(AsyncUtil.logError());
     }
 
     @Override

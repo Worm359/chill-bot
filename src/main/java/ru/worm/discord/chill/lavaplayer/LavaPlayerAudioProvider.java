@@ -3,37 +3,47 @@ package ru.worm.discord.chill.lavaplayer;
 import com.sedmelluq.discord.lavaplayer.format.StandardAudioDataFormats;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.track.playback.MutableAudioFrame;
-import discord4j.voice.AudioProvider;
+import net.dv8tion.jda.api.audio.AudioSendHandler;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 
-public final class LavaPlayerAudioProvider extends AudioProvider {
-
+@Component
+public class LavaPlayerAudioProvider implements AudioSendHandler {
     private final AudioPlayer player;
     private final MutableAudioFrame frame = new MutableAudioFrame();
 
-    public LavaPlayerAudioProvider(final AudioPlayer player) {
-        // Allocate a ByteBuffer for Discord4J's AudioProvider to hold audio data
-        // for Discord
-        super(
-            ByteBuffer.allocate(
-                StandardAudioDataFormats.DISCORD_OPUS.maximumChunkSize()
-            )
-        );
-        // Set LavaPlayer's MutableAudioFrame to use the same buffer as the one we
-        // just allocated
-        frame.setBuffer(getBuffer());
+    private final ByteBuffer buffer;
+
+    public LavaPlayerAudioProvider(AudioPlayer player) {
         this.player = player;
+        this.buffer = ByteBuffer.allocate(
+                StandardAudioDataFormats.DISCORD_OPUS.maximumChunkSize()
+            );
+        this.frame.setBuffer(buffer);
     }
 
     @Override
-    public boolean provide() {
+    public boolean canProvide() {
         // AudioPlayer writes audio data to its AudioFrame
         final boolean didProvide = player.provide(frame);
         // If audio was provided, flip from write-mode to read-mode
         if (didProvide) {
-            getBuffer().flip();
+            provide20MsAudio().flip();
         }
         return didProvide;
+    }
+
+
+    @Nullable
+    @Override
+    public ByteBuffer provide20MsAudio() {
+        return buffer;
+    }
+
+    @Override
+    public boolean isOpus() {
+        return true;
     }
 }

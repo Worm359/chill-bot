@@ -2,15 +2,11 @@ package ru.worm.discord.chill.logic.locking;
 
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.MonoSink;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 @Service
 public class LoadEventHandler implements DisposableBean {
@@ -38,7 +34,7 @@ public class LoadEventHandler implements DisposableBean {
         executor.schedule(() -> subscriber.dispatchState(TrackCashState.error), 32, TimeUnit.SECONDS);
     }
 
-    public static ILoadingAwaiter awaiter(FileCashLock id, MonoSink<Void> r) {
+    public static ILoadingAwaiter awaiter(FileCashLock id, CompletableFuture<Boolean> r) {
         return new ILoadingAwaiter(id, r);
     }
 
@@ -50,9 +46,9 @@ public class LoadEventHandler implements DisposableBean {
     public static class ILoadingAwaiter {
         private volatile boolean set = false;
         private final FileCashLock lock;
-        private final MonoSink<Void> r;
+        private CompletableFuture<Boolean> r;
 
-        private ILoadingAwaiter(FileCashLock lock, MonoSink<Void> r) {
+        private ILoadingAwaiter(FileCashLock lock, CompletableFuture<Boolean> r) {
             this.lock = lock;
             this.r = r;
         }
@@ -64,9 +60,9 @@ public class LoadEventHandler implements DisposableBean {
                 }
                 set = true;
                 if (state == TrackCashState.ready) {
-                    r.success();
+                    r.complete(true);
                 } else {
-                    r.error(new RuntimeException("couldn't load ***"));
+                    r.complete(false);
                 }
             }
         }

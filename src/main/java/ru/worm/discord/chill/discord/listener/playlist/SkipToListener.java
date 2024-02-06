@@ -1,10 +1,10 @@
 package ru.worm.discord.chill.discord.listener.playlist;
 
-import discord4j.core.event.domain.message.MessageCreateEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.discord.Commands;
 import ru.worm.discord.chill.discord.listener.EventListener;
 import ru.worm.discord.chill.discord.listener.MessageListener;
@@ -14,8 +14,10 @@ import ru.worm.discord.chill.logic.command.validation.IdValidator;
 import ru.worm.discord.chill.queue.TrackQueue;
 import ru.worm.discord.chill.util.Pair;
 
+import javax.annotation.Nonnull;
+
 @Service
-public class SkipToListener extends MessageListener implements EventListener<MessageCreateEvent> {
+public class SkipToListener extends MessageListener implements EventListener {
     private final TrackQueue playlist;
 
     @Autowired
@@ -25,17 +27,13 @@ public class SkipToListener extends MessageListener implements EventListener<Mes
     }
 
     @Override
-    public Class<MessageCreateEvent> getEventType() {
-        return MessageCreateEvent.class;
-    }
-
-    public Mono<Void> execute(MessageCreateEvent event) {
-        return filterWithOptions(event.getMessage())
-                .doOnNext(p -> {
-                    int id = Integer.parseInt(p.getSecond().getOptionValue(CliOption.optIdRequired));
-                    playlist.skipTo(id);
-                })
-                .then();
+    public void onMessageReceived(@Nonnull MessageReceivedEvent event) {
+        CommandLine cli = filterWithOptions(event).orElse(null);
+        if (cli == null) {
+            return;
+        }
+        int id = Integer.parseInt(cli.getOptionValue(CliOption.optIdRequired));
+        playlist.skipTo(id);
     }
 
     @Override

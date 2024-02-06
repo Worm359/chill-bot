@@ -1,7 +1,5 @@
 package ru.worm.discord.chill.discord;
 
-import discord4j.common.util.Snowflake;
-import discord4j.core.object.entity.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,31 +39,27 @@ public class GuildObserver {
         return guildMode != null && guildMode.equals(GuildMode.dev);
     }
 
-    public static boolean modeMismatch(Message message) {
-        Long msgGuildId = message.getGuildId()
-                    .map(Snowflake::asLong)
-                    .orElse(null);
-        if (msgGuildId == null) return false;
-        boolean modeMismatch = serverIsInDevMode ^ isDevMode(msgGuildId);
+    public static boolean modeMismatch(long guildId, String command) {
+        if (guildId == 0 || Commands.DEV.equalsIgnoreCase(command)) return false;
+        boolean modeMismatch = serverIsInDevMode ^ isDevMode(guildId);
         if (modeMismatch) {
-            log.debug("server is in dev mode: {}. mode mismatch for msgGuildId={}",
+            log.debug("server is in dev mode: {}. mode mismatch for guildId={}",
                     serverIsInDevMode,
-                    msgGuildId);
+                    guildId);
         }
         return modeMismatch;
     }
 
-    public static boolean isLockedToAnotherGuildId(Message message, String command) {
-        if (command.equalsIgnoreCase(Commands.LOCK) || command.equalsIgnoreCase(Commands.STAT)) {
+    public static boolean isLockedToAnotherGuildId(Long guildId, String command) {
+        if (command.equalsIgnoreCase(Commands.LOCK)
+            || command.equalsIgnoreCase(Commands.STAT)
+            || command.equalsIgnoreCase(Commands.DEV)) {
             return false;
         }
         Long tmpGuildLock;
         if ((tmpGuildLock = guildIdLock) != null) {
-            Long msgGuildId = message.getGuildId()
-                    .map(Snowflake::asLong)
-                    .orElse(null);
-            log.debug("guildIdLock={} message.guildId={}", tmpGuildLock, msgGuildId);
-            return !Objects.equals(tmpGuildLock, msgGuildId);
+            log.debug("guildIdLock={} message.guildId={}", tmpGuildLock, guildId);
+            return !Objects.equals(tmpGuildLock, guildId);
 
         }
         return false;
