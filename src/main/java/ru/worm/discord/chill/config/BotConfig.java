@@ -1,5 +1,6 @@
 package ru.worm.discord.chill.config;
 
+import com.sedmelluq.discord.lavaplayer.jdaudp.NativeAudioSendFactory;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -8,29 +9,33 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import ru.worm.discord.chill.config.settings.DiscordSetting;
 import ru.worm.discord.chill.config.settings.RootSettings;
+import ru.worm.discord.chill.util.TextUtil;
 
 import java.time.Instant;
 
 @Configuration
 public class BotConfig {
     private final Logger log = LoggerFactory.getLogger(getClass());
-
-    private final String token;
+    private final DiscordSetting discordSetting;
 
     @Autowired
     public BotConfig(RootSettings settings) {
-        token = settings.getDiscord().getToken();
-        assert (token != null);
+        discordSetting = settings.getDiscord();
+        assert (!TextUtil.isEmpty(settings.getDiscord().getToken()));
     }
 
     @Bean
     public JDA discordJdaClient() throws InterruptedException {
-        return JDABuilder
-                .createDefault(token)
-                .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MESSAGES)
-                .build()
-                .awaitReady();
+        JDABuilder jdaBuilder = JDABuilder
+            .createDefault(discordSetting.getToken())
+            .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MESSAGES);
+        if (discordSetting.isUseJdaNas()) {
+            jdaBuilder.setAudioSendFactory(new NativeAudioSendFactory());
+        }
+        JDA jda = jdaBuilder.build().awaitReady();
+        return jda;
     }
 
 //    @Bean
