@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 public class RootSettings {
     DiscordSetting discord;
     YoutubeSetting youtube = new YoutubeSetting();
+    LavaPlayerSetting lavaPlayer = new LavaPlayerSetting();
 
     public DiscordSetting getDiscord() {
         return discord;
@@ -25,5 +26,13 @@ public class RootSettings {
 
     public void setYoutube(YoutubeSetting youtube) {
         this.youtube = youtube;
+    }
+
+    public LavaPlayerSetting getLavaPlayer() {
+        return lavaPlayer;
+    }
+
+    public void setLavaPlayer(LavaPlayerSetting lavaPlayer) {
+        this.lavaPlayer = lavaPlayer;
     }
 }

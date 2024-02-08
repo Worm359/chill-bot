@@ -8,10 +8,18 @@ import com.sedmelluq.discord.lavaplayer.track.playback.NonAllocatingAudioFrameBu
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import ru.worm.discord.chill.config.settings.LavaPlayerSetting;
+import ru.worm.discord.chill.config.settings.RootSettings;
 import ru.worm.discord.chill.lavaplayer.LavaPlayerEventListener;
 
 @Configuration
 public class LavaPlayerConfig {
+
+    private final LavaPlayerSetting settings;
+
+    public LavaPlayerConfig(RootSettings settings) {
+        this.settings = settings.getLavaPlayer();
+    }
 
     /**
      * lavaplayer
@@ -24,8 +32,10 @@ public class LavaPlayerConfig {
         // It is not important to understand
         playerManager.getConfiguration()
                 .setFrameBufferFactory(NonAllocatingAudioFrameBuffer::new);
-        // Allow playerManager to parse remote sources like YouTube links
-        AudioSourceManagers.registerRemoteSources(playerManager);
+        //Allow playerManager to parse remote sources like YouTube links
+        if (settings.getUseRemote()) {
+            AudioSourceManagers.registerRemoteSources(playerManager);
+        }
         AudioSourceManagers.registerLocalSource(playerManager);
         return playerManager;
     }
