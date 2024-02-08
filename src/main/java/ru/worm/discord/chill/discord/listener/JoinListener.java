@@ -2,6 +2,8 @@ package ru.worm.discord.chill.discord.listener;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import net.dv8tion.jda.api.audio.SpeakingMode;
+import net.dv8tion.jda.api.audio.hooks.ConnectionListener;
+import net.dv8tion.jda.api.audio.hooks.ConnectionStatus;
 import net.dv8tion.jda.api.entities.GuildVoiceState;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
@@ -12,14 +14,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.worm.discord.chill.discord.Commands;
 import ru.worm.discord.chill.lavaplayer.LavaPlayerAudioProvider;
+import ru.worm.discord.chill.queue.TrackQueue;
 import ru.worm.discord.chill.util.ExceptionUtils;
 
 import javax.annotation.Nonnull;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
 public class JoinListener extends MessageListener implements EventListener {
     private final AudioPlayer audioPlayer;
+    private final TrackQueue trackQueue;
     private final Locker locker = new Locker();
     private AudioManager currentManager;
     private final LavaPlayerAudioProvider mySendHandler;
@@ -28,8 +33,9 @@ public class JoinListener extends MessageListener implements EventListener {
      * реализовать AudioProvider самому не получилось, см. ru.worm.discord.chill.ffmpeg.FfmpegAudioProvider
      */
     @Autowired
-    public JoinListener(AudioPlayer audioPlayer, LavaPlayerAudioProvider mySendHandler) {
+    public JoinListener(AudioPlayer audioPlayer, TrackQueue trackQueue, LavaPlayerAudioProvider mySendHandler) {
         this.audioPlayer = audioPlayer;
+        this.trackQueue = trackQueue;
         this.mySendHandler = mySendHandler;
         this.command = Commands.JOIN;
     }
@@ -46,6 +52,7 @@ public class JoinListener extends MessageListener implements EventListener {
         }
         Optional<String> voiceValidError = validateVoiceState(event);
         if (voiceValidError.isPresent()) {
+            log.error(voiceValidError.get());
             answer(event, voiceValidError.get());
             return;
         }
@@ -54,6 +61,7 @@ public class JoinListener extends MessageListener implements EventListener {
             .getVoiceState()
             .getChannel()
             .asVoiceChannel();
+        AudioManager requestManager = voiceChannel.getGuild().getAudioManager();
         synchronized (locker) {
             if (locker.isLoading) {
                 answer(event, "sorry. already processing another join");
@@ -61,29 +69,51 @@ public class JoinListener extends MessageListener implements EventListener {
             }
             locker.isLoading = true;
             if (currentManager != null) {
+                log.info("pausing and closing previous connection");
                 audioPlayer.setPaused(true);
-                currentManager.closeAudioConnection();
-                this.currentManager = null;
+                if (!Objects.equals(requestManager.getGuild().getIdLong(), currentManager.getGuild().getIdLong())) {
+                    currentManager.closeAudioConnection();
+                }
             }
         }
-        boolean wasConnectionErr = false;
         try {
-            currentManager = voiceChannel.getGuild().getAudioManager();
+            currentManager = requestManager;
             currentManager.setSendingHandler(mySendHandler);
             currentManager.setSelfDeafened(false);
             currentManager.setSelfMuted(false);
             currentManager.setSpeakingMode(SpeakingMode.VOICE);
+            currentManager.setConnectionListener(resumeListener);
+            log.info("opening new connection");
             currentManager.openAudioConnection(voiceChannel);
         } catch (Throwable e) {
           log.error("{}", ExceptionUtils.getStackTrace(e));
-          wasConnectionErr = true;
         } finally {
             synchronized (locker) {
                 locker.isLoading = false;
-                audioPlayer.setPaused(wasConnectionErr);
             }
         }
     }
+
+    private final ConnectionListener resumeListener = new ConnectionListener() {
+        @Override
+        public void onPing(long ping) {
+
+        }
+
+        @Override
+        public void onStatusChange(@Nonnull ConnectionStatus status) {
+            log.info("connected event {}", status);
+            if (ConnectionStatus.CONNECTED.equals(status)) {
+                if (audioPlayer.getPlayingTrack() != null) {
+                    audioPlayer.setPaused(false);
+                } else {
+                    trackQueue.kickConnected();
+                }
+            } else if (ConnectionStatus.DISCONNECTED_KICKED_FROM_CHANNEL.equals(status)) {
+                audioPlayer.stopTrack();
+            }
+        }
+    };
 
     private Optional<String> validateVoiceState(MessageReceivedEvent event) {
         Member member = event.getMember();

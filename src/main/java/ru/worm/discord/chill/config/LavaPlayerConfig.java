@@ -24,7 +24,6 @@ public class LavaPlayerConfig {
         // It is not important to understand
         playerManager.getConfiguration()
                 .setFrameBufferFactory(NonAllocatingAudioFrameBuffer::new);
-
         // Allow playerManager to parse remote sources like YouTube links
         AudioSourceManagers.registerRemoteSources(playerManager);
         AudioSourceManagers.registerLocalSource(playerManager);
