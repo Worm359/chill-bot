@@ -13,7 +13,7 @@ import net.dv8tion.jda.api.managers.AudioManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.worm.discord.chill.discord.Commands;
-import ru.worm.discord.chill.lavaplayer.LavaPlayerAudioProvider;
+import ru.worm.discord.chill.lavaplayer.LavaPlayerAudioProviderV2;
 import ru.worm.discord.chill.queue.TrackQueue;
 import ru.worm.discord.chill.util.ExceptionUtils;
 
@@ -27,13 +27,13 @@ public class JoinListener extends MessageListener implements EventListener {
     private final TrackQueue trackQueue;
     private final Locker locker = new Locker();
     private AudioManager currentManager;
-    private final LavaPlayerAudioProvider mySendHandler;
+    private final LavaPlayerAudioProviderV2 mySendHandler;
 
     /**
      * реализовать AudioProvider самому не получилось, см. ru.worm.discord.chill.ffmpeg.FfmpegAudioProvider
      */
     @Autowired
-    public JoinListener(AudioPlayer audioPlayer, TrackQueue trackQueue, LavaPlayerAudioProvider mySendHandler) {
+    public JoinListener(AudioPlayer audioPlayer, TrackQueue trackQueue, LavaPlayerAudioProviderV2 mySendHandler) {
         this.audioPlayer = audioPlayer;
         this.trackQueue = trackQueue;
         this.mySendHandler = mySendHandler;

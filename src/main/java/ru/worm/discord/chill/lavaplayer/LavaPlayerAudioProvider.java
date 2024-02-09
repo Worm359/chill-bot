@@ -3,13 +3,16 @@ package ru.worm.discord.chill.lavaplayer;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.track.playback.MutableAudioFrame;
 import net.dv8tion.jda.api.audio.AudioSendHandler;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.Nullable;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
-@Component
+
+/**
+ * from lavaplayer examples
+ */
+//@Component
 public class LavaPlayerAudioProvider implements AudioSendHandler {
     private final AudioPlayer audioPlayer;
     private final ByteBuffer buffer;
