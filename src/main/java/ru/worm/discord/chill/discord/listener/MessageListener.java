@@ -102,7 +102,11 @@ public abstract class MessageListener extends ListenerAdapter implements IWithPr
     }
 
     protected void answer(GenericMessageEvent event, String text) {
-        event.getChannel().sendMessage(text).queue();
+        String[] msgParts = TextUtil.splitMessage(text);
+        Arrays.stream(msgParts)
+            .forEach(msgPart -> event.getChannel()
+                .sendMessage(text)
+                .queue());
     }
 
     protected <T> CompletableFuture<T> async(Supplier<T> supplier) {

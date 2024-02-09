@@ -21,5 +21,6 @@ public interface Commands {
     public static String JOIN = "join"; //todo automatically join when playing something...
     public static String STAT = "status";
     public static String LOCK = "lock";
+    public static String CLEANUP_DIALOGUE = "clean";
     public static String DEV = "dev";
 }

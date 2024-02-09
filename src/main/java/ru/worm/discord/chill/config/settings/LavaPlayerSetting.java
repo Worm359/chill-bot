@@ -1,7 +1,7 @@
 package ru.worm.discord.chill.config.settings;
 
 public class LavaPlayerSetting {
-    private Boolean useRemote;
+    private Boolean useRemote = false;
 
     public Boolean getUseRemote() {
         return useRemote;
