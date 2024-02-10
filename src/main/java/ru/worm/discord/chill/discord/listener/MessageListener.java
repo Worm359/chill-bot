@@ -8,8 +8,6 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import ru.worm.discord.chill.discord.GuildObserver;
 import ru.worm.discord.chill.discord.IWithPrefix;
@@ -25,8 +23,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 public abstract class MessageListener extends ListenerAdapter implements IWithPrefix, DisposableBean {
-    protected static volatile Long guildIdLock;
-    private final Logger log = LoggerFactory.getLogger(getClass());
     private final static DefaultParser parser = new DefaultParser();
     protected String botPrefix;
     protected String command;
