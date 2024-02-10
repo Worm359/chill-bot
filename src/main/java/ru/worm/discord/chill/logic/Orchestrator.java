@@ -43,7 +43,7 @@ public class Orchestrator implements ITrackQSubscriber {
         log.info("track changed to {}", track);
         executorService.submit(() -> {
             boolean present = storage.checkFilePresent(track.getId());
-
+            //fixme messed up after migration to JDA
             CompletableFuture<Boolean> loaded;
             if (!present) {
                 loaded = downloader.loadAudio(track);
