@@ -3,6 +3,7 @@ package ru.worm.discord.chill.logic;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -15,18 +16,17 @@ import ru.worm.discord.chill.youtube.YtpDlpService;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static ru.worm.discord.chill.lavaplayer.StreamProvider.getOggTrack;
 
 @Service
-public class Orchestrator implements ITrackQSubscriber {
+public class Orchestrator implements ITrackQSubscriber, DisposableBean {
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final YtpDlpService downloader;
     private final TrackLoadLocker storage;
     private final TrackQueue playlist;
     private final AudioPlayer player;
-    private final ExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    private final ExecutorService executorService = PoolConfig.orchestratorExecutor;
 
     @Autowired
     public Orchestrator(YtpDlpService downloader, TrackLoadLocker storage,
@@ -63,5 +63,10 @@ public class Orchestrator implements ITrackQSubscriber {
                 }
             });
         });
+    }
+
+    @Override
+    public void destroy() {
+        executorService.shutdown();
     }
 }

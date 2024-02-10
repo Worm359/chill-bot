@@ -2,16 +2,20 @@ package ru.worm.discord.chill.logic.locking;
 
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Service;
+import ru.worm.discord.chill.logic.PoolConfig;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class LoadEventHandler implements DisposableBean {
     private final Map<Integer, List<ILoadingAwaiter>> callbacks = new ConcurrentHashMap<>();
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService executor = PoolConfig.trackLoadWaiter;
 
     public void downloaded(Integer id) {
         List<ILoadingAwaiter> consumers = callbacks.remove(id);

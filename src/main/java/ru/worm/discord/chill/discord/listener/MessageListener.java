@@ -10,6 +10,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import ru.worm.discord.chill.discord.GuildObserver;
 import ru.worm.discord.chill.discord.IWithPrefix;
 import ru.worm.discord.chill.logic.PoolConfig;
@@ -23,7 +24,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-public abstract class MessageListener extends ListenerAdapter implements IWithPrefix {
+public abstract class MessageListener extends ListenerAdapter implements IWithPrefix, DisposableBean {
     protected static volatile Long guildIdLock;
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final static DefaultParser parser = new DefaultParser();
@@ -111,6 +112,11 @@ public abstract class MessageListener extends ListenerAdapter implements IWithPr
 
     protected <T> CompletableFuture<T> async(Supplier<T> supplier) {
         return CompletableFuture.supplyAsync(supplier, PoolConfig.forEvents);
+    }
+
+    @Override
+    public void destroy() {
+        PoolConfig.forEvents.shutdown();
     }
 
     @Override
