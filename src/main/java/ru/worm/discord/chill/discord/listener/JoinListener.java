@@ -23,20 +23,20 @@ import java.util.Optional;
 
 @Service
 public class JoinListener extends MessageListener implements EventListener {
-    private final AudioPlayer audioPlayer;
+    private final AudioPlayer lavaPlayer;
     private final TrackQueue trackQueue;
     private final Locker locker = new Locker();
-    private AudioManager currentManager;
-    private final LavaPlayerAudioProviderV2 mySendHandler;
+    private AudioManager currentDiscordAudioManager;
+    private final LavaPlayerAudioProviderV2 discordAudioHandler;
 
     /**
      * реализовать AudioProvider самому не получилось, см. ru.worm.discord.chill.ffmpeg.FfmpegAudioProvider
      */
     @Autowired
-    public JoinListener(AudioPlayer audioPlayer, TrackQueue trackQueue, LavaPlayerAudioProviderV2 mySendHandler) {
-        this.audioPlayer = audioPlayer;
+    public JoinListener(AudioPlayer lavaPlayer, TrackQueue trackQueue, LavaPlayerAudioProviderV2 discordAudioHandler) {
+        this.lavaPlayer = lavaPlayer;
         this.trackQueue = trackQueue;
-        this.mySendHandler = mySendHandler;
+        this.discordAudioHandler = discordAudioHandler;
         this.command = Commands.JOIN;
     }
 
@@ -68,23 +68,23 @@ public class JoinListener extends MessageListener implements EventListener {
                 return;
             }
             locker.isLoading = true;
-            if (currentManager != null) {
+            if (currentDiscordAudioManager != null) {
                 log.info("pausing and closing previous connection");
-                audioPlayer.setPaused(true);
-                if (!Objects.equals(requestManager.getGuild().getIdLong(), currentManager.getGuild().getIdLong())) {
-                    currentManager.closeAudioConnection();
+                lavaPlayer.setPaused(true);
+                if (!Objects.equals(requestManager.getGuild().getIdLong(), currentDiscordAudioManager.getGuild().getIdLong())) {
+                    currentDiscordAudioManager.closeAudioConnection();
                 }
             }
         }
         try {
-            currentManager = requestManager;
-            currentManager.setSendingHandler(mySendHandler);
-            currentManager.setSelfDeafened(false);
-            currentManager.setSelfMuted(false);
-            currentManager.setSpeakingMode(SpeakingMode.VOICE);
-            currentManager.setConnectionListener(resumeListener);
+            currentDiscordAudioManager = requestManager;
+            currentDiscordAudioManager.setSendingHandler(discordAudioHandler);
+            currentDiscordAudioManager.setSelfDeafened(false);
+            currentDiscordAudioManager.setSelfMuted(false);
+            currentDiscordAudioManager.setSpeakingMode(SpeakingMode.VOICE);
+            currentDiscordAudioManager.setConnectionListener(resumeListener);
             log.info("opening new connection");
-            currentManager.openAudioConnection(voiceChannel);
+            currentDiscordAudioManager.openAudioConnection(voiceChannel);
         } catch (Throwable e) {
           log.error("{}", ExceptionUtils.getStackTrace(e));
         } finally {
@@ -104,13 +104,13 @@ public class JoinListener extends MessageListener implements EventListener {
         public void onStatusChange(@Nonnull ConnectionStatus status) {
             log.info("connected event {}", status);
             if (ConnectionStatus.CONNECTED.equals(status)) {
-                if (audioPlayer.getPlayingTrack() != null) {
-                    audioPlayer.setPaused(false);
+                if (lavaPlayer.getPlayingTrack() != null) {
+                    lavaPlayer.setPaused(false);
                 } else {
                     trackQueue.kickConnected();
                 }
             } else if (ConnectionStatus.DISCONNECTED_KICKED_FROM_CHANNEL.equals(status)) {
-                audioPlayer.stopTrack();
+                lavaPlayer.stopTrack();
             }
         }
     };
