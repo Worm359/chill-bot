@@ -12,6 +12,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <kotlin.version>1.9.23</kotlin.version>
 
         <!--versions-->
         <ru.worm.discord.dependency.version.jda>5.0.0-beta.20</ru.worm.discord.dependency.version.jda>
@@ -21,6 +22,17 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-reflect</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
@@ -87,6 +99,14 @@
             <artifactId>jda-nas</artifactId>
             <version>1.1.0</version>
         </dependency>
+        <!-- new -->
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-test</artifactId>
+            <version>${kotlin.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- /new -->
     </dependencies>
     <dependencyManagement>
         <dependencies>
@@ -127,6 +147,65 @@
             </resource>
         </resources>
         <plugins>
+            <!-- new -->
+            <plugin>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-maven-plugin</artifactId>
+                <version>${kotlin.version}</version>
+                <executions>
+                    <execution>
+                        <id>kotlin-compile</id>
+                        <phase>process-sources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirs>
+                                <source>src/main/java</source>
+                                <source>src/main/kotlin</source>
+<!--                                <source>target/generated-sources/annotations</source>-->
+                            </sourceDirs>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>test-compile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>test-compile</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirs>
+                                <source>src/test/java</source>
+                                <source>src/test/kotlin</source>
+<!--                                <source>target/generated-test-sources/test-annotations</source>-->
+                            </sourceDirs>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <args>
+                        <arg>-Xjsr305=strict</arg>
+                    </args>
+                    <compilerPlugins>
+                        <plugin>spring</plugin>
+                    </compilerPlugins>
+                    <jvmTarget>${maven.compiler.target}</jvmTarget>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.jetbrains.kotlin</groupId>
+                        <artifactId>kotlin-maven-allopen</artifactId>
+                        <version>${kotlin.version}</version>
+                    </dependency>
+                    <!-- for creating no argument constructors (for JPA) -->
+                    <!--<dependency>
+                        <groupId>org.jetbrains.kotlin</groupId>
+                        <artifactId>kotlin-maven-noarg</artifactId>
+                        <version>${kotlin.version}</version>
+                    </dependency>-->
+                </dependencies>
+            </plugin>
+            <!-- /new -->
             <plugin>
                 <artifactId>maven-clean-plugin</artifactId>
                 <version>2.4.1</version>
@@ -154,6 +233,7 @@
                 </executions>
                 <configuration>
                     <finalName>${project.artifactId}</finalName>
+                    <mainClass>ru.worm.discord.chill.ChillBotApplication</mainClass> <!-- new -->
                 </configuration>
             </plugin>
 
@@ -204,6 +284,34 @@
                                 </fileSet>
                             </fileSets>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-compile</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>testCompile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>

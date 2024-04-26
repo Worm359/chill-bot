@@ -11,6 +11,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class ChillBotApplication {
     private static final Logger log = LoggerFactory.getLogger(ChillBotApplication.class);
     public static void main(String[] args) {
+        KotlinGreeter greeter = new KotlinGreeter();
+        greeter.greet();
         SpringApplication app = new SpringApplication(ChillBotApplication.class);
         app.run(args);
     }
