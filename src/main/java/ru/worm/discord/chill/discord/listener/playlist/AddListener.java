@@ -50,6 +50,11 @@ public class AddListener extends MessageListener implements ITextCommand {
     }
 
     @Override
+    protected String helpMessage() {
+        return "usage: `!add https://www.youtube.com/watch?...`\n";
+    }
+
+    @Override
     public Pair<Options, IOptionValidator> options() {
         return new Pair<>(CliOption.emptyOptions, CliOptionValidation.youtubeLink);
     }

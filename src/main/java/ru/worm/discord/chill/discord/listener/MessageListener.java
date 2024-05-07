@@ -41,15 +41,14 @@ public abstract class MessageListener extends ListenerAdapter implements IWithPr
         String[] commandWords = messageContent.split(" ");
         if (!commandWords[0].equalsIgnoreCase(commandName())) {
             return false;
+        } else if (GuildObserver.modeMismatch(message.getGuildIdLong(), command)) {
+            return false;
         } else if (Arrays.stream(commandWords).anyMatch(s -> s.equalsIgnoreCase("-h") || s.equalsIgnoreCase("--help"))) {
             answer(event, helpMessage());
             return false;
         } else {
             if (GuildObserver.isLockedToAnotherGuildId(message.getGuildIdLong(), command)) {
                 answer(event, "sorry, bot is locked to another guildId");
-                return false;
-            }
-            if (GuildObserver.modeMismatch(message.getGuildIdLong(), command)) {
                 return false;
             }
             return true;

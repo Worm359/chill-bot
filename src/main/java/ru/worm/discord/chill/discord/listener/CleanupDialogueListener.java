@@ -50,6 +50,6 @@ public class CleanupDialogueListener extends MessageListener implements ITextCom
 
     @Override
     protected String helpMessage() {
-        return "deletes all all recent messages from bot or addressed to bot.";
+        return "deletes all recent messages from bot or addressed to bot.";
     }
 }

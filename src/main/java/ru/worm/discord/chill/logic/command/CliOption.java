@@ -67,7 +67,7 @@ public class CliOption {
         optUrlRequired = new Option("url", true, "url with youtube playlist");
         optUrlRequired.setRequired(true);
         urlAndShuffle.addOption(optUrlRequired);
-        shuffle = new Option("s", "shuffle", false, "will shuffle youtube playlist, before adding adding tracks to queue");
+        shuffle = new Option("s", "shuffle", false, "will shuffle youtube playlist, before adding tracks to queue");
         urlAndShuffle.addOption(shuffle);
     }
 
