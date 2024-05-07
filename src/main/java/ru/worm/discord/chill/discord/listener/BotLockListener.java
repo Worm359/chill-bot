@@ -16,7 +16,7 @@ import java.time.Duration;
 import java.util.Objects;
 
 @Service
-public class BotLockListener extends MessageListener implements EventListener {
+public class BotLockListener extends MessageListener implements ITextCommand {
     private volatile String lastDurationChecked;
 
     public BotLockListener() {
@@ -68,7 +68,7 @@ public class BotLockListener extends MessageListener implements EventListener {
     }
 
     @Override
-    protected Pair<Options, IOptionValidator> options() {
+    public Pair<Options, IOptionValidator> options() {
         return new Pair<>(CliOption.offAndPassword, OffAndPasswordValidator.INSTANCE);
     }
 }

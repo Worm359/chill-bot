@@ -8,7 +8,7 @@ import ru.worm.discord.chill.discord.GuildObserver;
 import javax.annotation.Nonnull;
 
 @Service
-public class DevListener extends MessageListener implements EventListener {
+public class DevListener extends MessageListener implements ITextCommand {
 
     public DevListener() {
         this.command = Commands.DEV;

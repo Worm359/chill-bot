@@ -10,7 +10,7 @@ import java.time.Duration;
 import java.time.Instant;
 
 @Service
-public class StatusListener extends MessageListener implements EventListener {
+public class StatusListener extends MessageListener implements ITextCommand {
     private final Instant launchTimestamp;
     private final BotLockListener lockListener;
 

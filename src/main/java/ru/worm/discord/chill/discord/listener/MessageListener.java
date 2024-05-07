@@ -102,7 +102,7 @@ public abstract class MessageListener extends ListenerAdapter implements IWithPr
         String[] msgParts = TextUtil.splitMessage(text);
         Arrays.stream(msgParts)
             .forEach(msgPart -> event.getChannel()
-                .sendMessage(text)
+                .sendMessage(msgPart)
                 .queue());
     }
 
@@ -125,7 +125,7 @@ public abstract class MessageListener extends ListenerAdapter implements IWithPr
         return botPrefix + this.command;
     }
 
-    protected Pair<Options, IOptionValidator> options() {
+    public Pair<Options, IOptionValidator> options() {
         return new Pair<>(null, null);
     }
 

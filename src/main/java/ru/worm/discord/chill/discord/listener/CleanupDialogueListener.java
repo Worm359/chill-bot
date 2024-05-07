@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Service
-public class CleanupDialogueListener extends MessageListener implements EventListener {
+public class CleanupDialogueListener extends MessageListener implements ITextCommand {
     private static final int DAYS_DELETE_LIMIT = 7;
 
     public CleanupDialogueListener() {

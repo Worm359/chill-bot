@@ -20,7 +20,7 @@ import static ru.worm.discord.chill.util.Consts.DEV_PROFILE;
 
 @Profile(DEV_PROFILE)
 @Service
-public class PlayExampleListener extends MessageListener implements EventListener {
+public class PlayExampleListener extends MessageListener implements ITextCommand {
     private final AudioPlayer player;
     public PlayExampleListener(AudioPlayer player) {
         this.player = player;

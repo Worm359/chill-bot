@@ -7,7 +7,7 @@ import ru.worm.discord.chill.discord.Commands;
 import javax.annotation.Nonnull;
 
 @Service
-public class PingListener extends MessageListener implements EventListener {
+public class PingListener extends MessageListener implements ITextCommand {
     public PingListener() {
         this.command = Commands.PING;
     }

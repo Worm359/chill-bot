@@ -19,7 +19,7 @@ import javax.annotation.Nonnull;
  * добавляет в playlist следующий youtube трек
  */
 @Service
-public class PlayerListener extends MessageListener implements EventListener {
+public class PlayerListener extends MessageListener implements ITextCommand {
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final AudioPlayer player;
 
@@ -45,7 +45,7 @@ public class PlayerListener extends MessageListener implements EventListener {
     }
 
     @Override
-    protected Pair<Options, IOptionValidator> options() {
+    public Pair<Options, IOptionValidator> options() {
         return new Pair<>(CliOption.player, null);
     }
 }

@@ -22,7 +22,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Service
-public class JoinListener extends MessageListener implements EventListener {
+public class JoinListener extends MessageListener implements ITextCommand {
     private final AudioPlayer lavaPlayer;
     private final TrackQueue trackQueue;
     private final Locker locker = new Locker();

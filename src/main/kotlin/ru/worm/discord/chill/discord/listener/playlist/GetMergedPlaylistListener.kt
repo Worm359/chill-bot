@@ -3,14 +3,15 @@ package ru.worm.discord.chill.discord.listener.playlist
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import org.springframework.stereotype.Service
 import ru.worm.discord.chill.discord.Commands
-import ru.worm.discord.chill.discord.listener.EventListener
+import ru.worm.discord.chill.discord.listener.ITextCommand
 import ru.worm.discord.chill.discord.listener.MessageListener
 import ru.worm.discord.chill.queue.TrackQueue
 import java.util.*
 import java.util.stream.Stream
 
 @Service
-class GetMergedPlaylistListener(val playlist: TrackQueue) : MessageListener(), EventListener {
+class GetMergedPlaylistListener(val playlist: TrackQueue) : MessageListener(),
+    ITextCommand {
 
     init {
         command = Commands.GET_MERGED_PLAYLIST

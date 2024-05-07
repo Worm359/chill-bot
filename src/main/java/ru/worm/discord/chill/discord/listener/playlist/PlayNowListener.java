@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.worm.discord.chill.discord.Commands;
-import ru.worm.discord.chill.discord.listener.EventListener;
+import ru.worm.discord.chill.discord.listener.ITextCommand;
 import ru.worm.discord.chill.discord.listener.MessageListener;
 import ru.worm.discord.chill.logic.command.CliOption;
 import ru.worm.discord.chill.logic.command.IOptionValidator;
@@ -22,7 +22,7 @@ import javax.annotation.Nonnull;
 import java.util.Optional;
 
 @Service
-public class PlayNowListener extends MessageListener implements EventListener {
+public class PlayNowListener extends MessageListener implements ITextCommand {
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final TrackQueue playlist;
     private final TrackFactory trackFactory;
@@ -59,7 +59,7 @@ public class PlayNowListener extends MessageListener implements EventListener {
     }
 
     @Override
-    protected Pair<Options, IOptionValidator> options() {
+    public Pair<Options, IOptionValidator> options() {
         return new Pair<>(CliOption.idOrUrl, IdOrUrlValidator.INSTANCE);
     }
 }

@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import ru.worm.discord.chill.discord.Commands;
-import ru.worm.discord.chill.discord.listener.EventListener;
+import ru.worm.discord.chill.discord.listener.ITextCommand;
 import ru.worm.discord.chill.discord.listener.MessageListener;
 import ru.worm.discord.chill.queue.Track;
 import ru.worm.discord.chill.queue.TrackQueue;
@@ -19,7 +19,7 @@ import java.util.List;
  */
 @Profile(Consts.DEV_PROFILE)
 @Service
-public class GetPlaylistListener extends MessageListener implements EventListener {
+public class GetPlaylistListener extends MessageListener implements ITextCommand {
     private final TrackQueue playlist;
 
     @Autowired

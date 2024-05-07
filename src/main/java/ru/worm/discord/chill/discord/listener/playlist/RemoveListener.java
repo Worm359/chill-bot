@@ -6,7 +6,7 @@ import org.apache.commons.cli.Options;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.worm.discord.chill.discord.Commands;
-import ru.worm.discord.chill.discord.listener.EventListener;
+import ru.worm.discord.chill.discord.listener.ITextCommand;
 import ru.worm.discord.chill.discord.listener.MessageListener;
 import ru.worm.discord.chill.logic.command.CliOption;
 import ru.worm.discord.chill.logic.command.IOptionValidator;
@@ -17,7 +17,7 @@ import ru.worm.discord.chill.util.Pair;
 import javax.annotation.Nonnull;
 
 @Service
-public class RemoveListener extends MessageListener implements EventListener {
+public class RemoveListener extends MessageListener implements ITextCommand {
     private final TrackQueue playlist;
 
     @Autowired
@@ -37,7 +37,7 @@ public class RemoveListener extends MessageListener implements EventListener {
     }
 
     @Override
-    protected Pair<Options, IOptionValidator> options() {
+    public Pair<Options, IOptionValidator> options() {
         return new Pair<>(CliOption.id, IdValidator.INSTANCE);
     }
 }

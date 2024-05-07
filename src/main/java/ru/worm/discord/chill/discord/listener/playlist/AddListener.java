@@ -6,7 +6,7 @@ import org.apache.commons.cli.Options;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.worm.discord.chill.discord.Commands;
-import ru.worm.discord.chill.discord.listener.EventListener;
+import ru.worm.discord.chill.discord.listener.ITextCommand;
 import ru.worm.discord.chill.discord.listener.MessageListener;
 import ru.worm.discord.chill.logic.command.CliOption;
 import ru.worm.discord.chill.logic.command.CliOptionValidation;
@@ -22,7 +22,7 @@ import javax.annotation.Nonnull;
  * добавляет в playlist следующий youtube трек
  */
 @Service
-public class AddListener extends MessageListener implements EventListener {
+public class AddListener extends MessageListener implements ITextCommand {
     private final TrackQueue playlist;
     private final TrackFactory trackFactory;
 
@@ -50,7 +50,7 @@ public class AddListener extends MessageListener implements EventListener {
     }
 
     @Override
-    protected Pair<Options, IOptionValidator> options() {
+    public Pair<Options, IOptionValidator> options() {
         return new Pair<>(CliOption.emptyOptions, CliOptionValidation.youtubeLink);
     }
 }

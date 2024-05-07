@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.worm.discord.chill.discord.Commands;
-import ru.worm.discord.chill.discord.listener.EventListener;
+import ru.worm.discord.chill.discord.listener.ITextCommand;
 import ru.worm.discord.chill.discord.listener.MessageListener;
 import ru.worm.discord.chill.queue.TrackQueue;
 
@@ -16,7 +16,7 @@ import javax.annotation.Nonnull;
  * мотает на предыдущий трек
  */
 @Service
-public class PreviousListener extends MessageListener implements EventListener {
+public class PreviousListener extends MessageListener implements ITextCommand {
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final TrackQueue playlist;
 
