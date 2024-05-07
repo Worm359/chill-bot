@@ -10,14 +10,16 @@ import ru.worm.discord.chill.discord.listener.playlist.*
 import ru.worm.discord.chill.logic.command.CliOption
 import java.io.PrintWriter
 import java.io.StringWriter
+import kotlin.reflect.KClass
+
+private const val AFTER_COMMAND_TAB = 12
+private const val NEXT_LINE_TAB_STOP = 15 //AFTER_COMMAND_TAB + ' - '.length :)
+private const val DESCRIPTION_WIDTH = 40
 
 @Service
 class HelpListener(val eventListeners: List<ITextCommand>) : MessageListener(), ITextCommand, InitializingBean {
 
     val groups = Groups()
-    val AFTER_COMMAND_TAB = 12
-    val NEXT_LINE_TAB_STOP = 15 //AFTER_COMMAND_TAB + ' - '.length :)
-    val DESCRIPTION_WIDTH = 40
     val categorized = HashSet<String>()
     val log: Logger = LoggerFactory.getLogger(HelpListener::class.java)
 
@@ -28,31 +30,31 @@ class HelpListener(val eventListeners: List<ITextCommand>) : MessageListener(), 
     override fun afterPropertiesSet() {
         groups.apply {
             group("ADDING TRACKS") {
-                add<AddListener>("add youtube video to the end of track queue")
-                add<AddYoutubePlaylist>("add youtube playlist to the end of track queue")
-                add<PlayNextListener>("play specified track next (by track ID or youtube URL). Use ID for referencing existing track in the queue/history.")
-                add<PlayNowListener>("skip current, play specified track now (by track ID or youtube URL). Use ID for referencing existing track in the queue/history.")
+                add(AddListener::class, "add youtube video to the end of track queue")
+                add(AddYoutubePlaylist::class, "add youtube playlist to the end of track queue")
+                add(PlayNextListener::class, "play specified track next (by track ID or youtube URL). Use ID for referencing existing track in the queue/history.")
+                add(PlayNowListener::class, "skip current, play specified track now (by track ID or youtube URL). Use ID for referencing existing track in the queue/history.")
             }
 
             group("QUEUE CONTROLS") {
-                add<NextListener>("play next track from queue")
-                add<PreviousListener>("play the previous track")
-                add<RemoveListener>("deletes the track from queue")
-                add<SkipToListener>("skip the queue to specific ID")
-                add<GetPlaylistListener>("prints all tracks from track queue")
-                add<GetHistoryListener>("prints all tracks from recent history")
-                add<GetCurrentListener>("prints currently playing song")
-                add<GetMergedPlaylistListener>("prints all tracks from history & track queue")
+                add(NextListener::class, "play next track from queue")
+                add(PreviousListener::class, "play the previous track")
+                add(RemoveListener::class, "deletes the track from queue")
+                add(SkipToListener::class, "skip the queue to specific ID")
+                add(GetPlaylistListener::class, "prints all tracks from track queue")
+                add(GetHistoryListener::class, "prints all tracks from recent history")
+                add(GetCurrentListener::class, "prints currently playing song")
+                add(GetMergedPlaylistListener::class, "prints all tracks from history & track queue")
             }
 
             group("BOT CONTROL") {
-                add<JoinListener>("invite bot to the voice channel you currently in")
-                add<PlayerListener>("play/pause")
-                add<CleanupDialogueListener>("remove recent bot related messages from text channel")
-                add<StatusListener>("show bot status/version")
-                add<PingListener>("ping the bot")
-                add<BotLockListener>("lock bot to current discord server")
-                add<DevListener>("to notify the bots that 'dev' environment is used. add ' disable' to return to normal")
+                add(JoinListener::class, "invite bot to the voice channel you currently in")
+                add(PlayerListener::class, "play/pause")
+                add(CleanupDialogueListener::class, "remove recent bot related messages from text channel")
+                add(StatusListener::class, "show bot status/version")
+                add(PingListener::class, "ping the bot")
+                add(BotLockListener::class, "lock bot to current discord server")
+                add(DevListener::class, "to notify the bots that 'dev' environment is used. add ' disable' to return to normal")
             }
 
             eventListeners
@@ -87,8 +89,8 @@ class HelpListener(val eventListeners: List<ITextCommand>) : MessageListener(), 
     }
 
     // Method to find a specific type of ITextCommand
-    private inline fun <reified T : ITextCommand> findCommand(): T? {
-        return eventListeners.find { it is T } as T?
+    private fun <T : ITextCommand> findCommand(clazz: KClass<T>): ITextCommand? {
+        return eventListeners.find { clazz.isInstance(it) }
     }
 
     fun wrapWithTabulation(text: String): String {
@@ -111,13 +113,13 @@ class HelpListener(val eventListeners: List<ITextCommand>) : MessageListener(), 
         val commands = mutableListOf<Pair<ITextCommand, String?>>()
     }
 
-    private inline fun <reified T : ITextCommand> Group.add(description: String? = null) {
-        val listener = findCommand<T>()
+    private fun <T : ITextCommand> Group.add(clazz: KClass<T>, description: String? = null) {
+        val listener = findCommand(clazz)
         if (listener != null) {
             commands.add(Pair(listener, description))
             categorized.add(listener.commandName())
         } else {
-            log.info("no such command as ${T::class.java.simpleName} is known.")
+            log.info("no such command as ${clazz.simpleName} is known.")
         }
     }
 
