@@ -41,10 +41,10 @@ class HelpListener(val eventListeners: List<ITextCommand>) : MessageListener(), 
                 add(PreviousListener::class, "play the previous track")
                 add(RemoveListener::class, "deletes the track from queue")
                 add(SkipToListener::class, "skip the queue to specific ID")
-                add(GetPlaylistListener::class, "print all tracks from track queue")
-                add(GetHistoryListener::class, "print all tracks from recent history")
                 add(GetCurrentListener::class, "print currently playing song")
                 add(GetMergedPlaylistListener::class, "print all tracks from history & track queue")
+                add(GetPlaylistListener::class, "print all tracks from track queue")
+                add(GetHistoryListener::class, "print all tracks from recent history")
             }
 
             group("BOT CONTROL") {
