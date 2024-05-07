@@ -22,7 +22,7 @@ class HelpListener(val eventListeners: List<ITextCommand>) : MessageListener(), 
     val log: Logger = LoggerFactory.getLogger(HelpListener::class.java)
 
     init {
-        command = Commands.HELP + 2
+        command = Commands.HELP
     }
 
     override fun afterPropertiesSet() {
