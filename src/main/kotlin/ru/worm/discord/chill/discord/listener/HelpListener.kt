@@ -58,13 +58,13 @@ class HelpListener(val eventListeners: List<ITextCommand>) : MessageListener(), 
             }
 
             eventListeners
-                .filter {!categorized.contains(it.commandName())}
+                .filter { !categorized.contains(it.commandName()) }
                 .takeIf { it.isNotEmpty() }
                 ?.let { uknowns ->
                     group("OTHER") {
                         uknowns.forEach { addUnknown(it) }
                     }
-            }
+                }
 
         }
     }
