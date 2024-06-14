@@ -27,7 +27,7 @@ class GetMergedPlaylistListener(val playlist: TrackQueue) : MessageListener(),
         Collections.reverse(history)
         val allTracks = Stream.concat(history.stream(), playing.stream()).toList()
         val hstMsg = buildString {
-            append("id\t\t\t\ttitle\n")
+            append("```\nid\t\t\t\ttitle\n")
             allTracks.forEachIndexed { index, track ->
                 if (index == playingIndex) {
                     append(">${track.id}=======${track.title}=======\n")
@@ -35,6 +35,7 @@ class GetMergedPlaylistListener(val playlist: TrackQueue) : MessageListener(),
                     append("*${track.id}\t\t\t\t${track.title}\t\t\t\t\n")
                 }
             }
+            append("```")
         }
         answer(event, hstMsg)
     }
