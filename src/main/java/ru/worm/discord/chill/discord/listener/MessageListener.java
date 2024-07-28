@@ -11,6 +11,7 @@ import org.apache.commons.cli.ParseException;
 import org.springframework.beans.factory.DisposableBean;
 import ru.worm.discord.chill.discord.GuildObserver;
 import ru.worm.discord.chill.discord.IWithPrefix;
+import ru.worm.discord.chill.discord.NotificationService;
 import ru.worm.discord.chill.logic.PoolConfig;
 import ru.worm.discord.chill.logic.command.CliOption;
 import ru.worm.discord.chill.logic.command.IOptionValidator;
@@ -51,6 +52,7 @@ public abstract class MessageListener extends ListenerAdapter implements IWithPr
                 answer(event, "sorry, bot is locked to another guildId");
                 return false;
             }
+            NotificationService.Companion.setChannelId(message.getChannelIdLong());
             return true;
         }
     }
@@ -90,6 +92,7 @@ public abstract class MessageListener extends ListenerAdapter implements IWithPr
             if (GuildObserver.modeMismatch(message.getGuildIdLong(), command)) {
                 return Optional.empty();
             }
+            NotificationService.Companion.setChannelId(message.getChannelIdLong());
             return Optional.of(parse);
         } catch (ParseException e) {
             event.getChannel().sendMessage(e.getLocalizedMessage()).queue();

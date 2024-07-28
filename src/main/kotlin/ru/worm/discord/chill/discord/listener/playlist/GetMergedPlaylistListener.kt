@@ -32,7 +32,7 @@ class GetMergedPlaylistListener(val playlist: TrackQueue) : MessageListener(),
                 if (index == playingIndex) {
                     append(">${track.id}=======${track.title}=======\n")
                 } else {
-                    append("*${track.id}\t\t\t\t${track.title}\t\t\t\t\n")
+                    append("*${track.id}\t\t${track.title}\n")
                 }
             }
             append("```")
