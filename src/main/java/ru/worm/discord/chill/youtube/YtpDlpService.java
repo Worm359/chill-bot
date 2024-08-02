@@ -6,11 +6,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.worm.discord.chill.config.settings.RootSettings;
 import ru.worm.discord.chill.config.settings.YoutubeSetting;
+import ru.worm.discord.chill.logic.PoolConfig;
 import ru.worm.discord.chill.logic.locking.FileCashLock;
 import ru.worm.discord.chill.logic.locking.LoadEventHandler;
 import ru.worm.discord.chill.logic.locking.TrackCashState;
 import ru.worm.discord.chill.logic.locking.TrackLoadLocker;
 import ru.worm.discord.chill.queue.Track;
+import ru.worm.discord.chill.util.CommandLineLoggerV2;
+import ru.worm.discord.chill.util.ExceptionUtils;
 import ru.worm.discord.chill.util.YoutubeUtil;
 
 import java.io.IOException;
@@ -87,14 +90,17 @@ public class YtpDlpService {
             }
 
             //process building
-            ProcessBuilder pb = new ProcessBuilder(settings.getYtpDlpBin(),
-                "-x",
-                "-o", trackFile(ytTrack),
-                "--audio-format", "opus",
-                "--no-playlist",
-                YoutubeUtil.urlForVideoId(ytTrack.getVideoId()));
-            pb.inheritIO();
-            Process ytpDlpProcess = pb.start();
+            Process ytpDlpProcess = new ProcessBuilder(settings.getYtpDlpBin(),
+                    "-x",
+                    "-o", trackFile(ytTrack),
+                    "--audio-format", "opus",
+                    "--no-playlist",
+                    YoutubeUtil.urlForVideoId(ytTrack.getVideoId()))
+                .redirectErrorStream(true)
+                .start();
+            CommandLineLoggerV2 cll = new CommandLineLoggerV2(ytpDlpProcess.getInputStream());
+            cll.setIdentifier("(%d) %s".formatted(ytTrack.getId(), ytTrack.getTitle()));
+            cll.log(PoolConfig.processOutputLogger);
             //process -> future
             CompletableFuture<Process> future = ytpDlpProcess.onExit();
             future.completeOnTimeout(ytpDlpProcess, 30, TimeUnit.SECONDS);
@@ -111,6 +117,7 @@ public class YtpDlpService {
                         String err = "couldn't load " + ytTrack;
                         processError.accept(err);
                         result.complete(err(err));
+                        killProcess(ytpDlpProcess);
                     }
                 }
             });
@@ -137,5 +144,18 @@ public class YtpDlpService {
             log.debug("{} duration check OK.", ytTrack);
             return Optional.empty();
         }
+    }
+
+    private void killProcess(Process process) {
+        process.destroy();
+        PoolConfig.trackLoadWaiter.schedule(() -> {
+            try {
+                if (process.isAlive()) {
+                    process.destroyForcibly();
+                }
+            } catch (Throwable e) {
+                log.error("{}", ExceptionUtils.getStackTrace(e));
+            }
+        }, 5, TimeUnit.SECONDS);
     }
 }

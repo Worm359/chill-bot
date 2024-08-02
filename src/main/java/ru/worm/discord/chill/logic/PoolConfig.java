@@ -11,4 +11,6 @@ public class PoolConfig {
     public static final ExecutorService orchestratorExecutor = Executors.newSingleThreadScheduledExecutor();
     //for tracks, waiting to be loaded/discarded
     public static final ScheduledExecutorService trackLoadWaiter = Executors.newSingleThreadScheduledExecutor();
+    //for process output logging
+    public static final ExecutorService processOutputLogger = Executors.newSingleThreadExecutor();
 }
