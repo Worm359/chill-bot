@@ -72,9 +72,13 @@ public class YtpDlpService {
                         "somehow have managed to get 'deleted' track lock. could try again next time."
                     ));
                 } else {
-                    if (state == TrackCashState.idle) {
-                        trackLock.loading();
+                    if (state != TrackCashState.idle) {
+                        processError.accept("unknown track state " + state);
+                        return CompletableFuture.completedFuture(err(
+                            "unknown track state " + state
+                        ));
                     }
+                    trackLock.loading();
                 }
             }
 
