@@ -64,6 +64,12 @@ public class TrackQueue {
         }
     }
 
+    public synchronized void kickConnected() {
+        if (current != null) {
+            trackMng.dispatchEvent(TrackEventCreator.currentPlayingIs(current));
+        }
+    }
+
     private void kick() {
         if (current == null) next();
     }

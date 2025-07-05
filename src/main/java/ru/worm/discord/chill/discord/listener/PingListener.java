@@ -1,26 +1,22 @@
 package ru.worm.discord.chill.discord.listener;
 
-import discord4j.core.event.domain.message.MessageCreateEvent;
-import discord4j.core.object.entity.Message;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.discord.Commands;
 
+import javax.annotation.Nonnull;
+
 @Service
-public class PingListener extends MessageListener implements EventListener<MessageCreateEvent> {
+public class PingListener extends MessageListener implements ITextCommand {
     public PingListener() {
         this.command = Commands.PING;
     }
 
     @Override
-    public Class<MessageCreateEvent> getEventType() {
-        return MessageCreateEvent.class;
-    }
-
-    public Mono<Void> execute(MessageCreateEvent event) {
-        return filter(event.getMessage())
-                .flatMap(Message::getChannel)
-                .flatMap(channel -> channel.createMessage("suck a dick dumbshits"))
-                .then();
+    public void onMessageReceived(@Nonnull MessageReceivedEvent event) {
+        if (!filter(event)) {
+            return;
+        }
+        answer(event, "suck a dick dumbshits");
     }
 }

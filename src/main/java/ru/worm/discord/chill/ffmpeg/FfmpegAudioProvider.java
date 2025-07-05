@@ -1,7 +1,5 @@
 package ru.worm.discord.chill.ffmpeg;
 
-import discord4j.voice.AudioProvider;
-import discord4j.voice.Opus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.worm.discord.chill.util.ExceptionUtils;
@@ -13,23 +11,23 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 //@Component
-public class FfmpegAudioProvider extends AudioProvider {
+public class FfmpegAudioProvider  {
     Logger log = LoggerFactory.getLogger(getClass());
     private final static byte[] tempOpusBytes; //OPUS file, which is read from disk
 
+    ByteBuffer buffer;
     public FfmpegAudioProvider() {
         //various tries to pick up the right ByteBuffer size...
         //super();
         //super(ByteBuffer.allocate(StandardAudioDataFormats.DISCORD_OPUS.maximumChunkSize()));
         //super(ByteBuffer.allocate(StandardAudioDataFormats.DISCORD_OPUS.maximumChunkSize()));
         //super(ByteBuffer.allocate(240));
-        super(ByteBuffer.allocate(Opus.FRAME_SIZE));
+        buffer = (ByteBuffer.allocate(20));
     }
 
     private int position = 0; //position of read byte from OPUS file
-    @Override
+
     public boolean provide() {
-        ByteBuffer buffer = getBuffer();
         //разница между размером буффера и его заполненностью (пишем до полного буфера)
         log.debug("buffer limit {} position {}", buffer.limit(), buffer.position());
         int providedAudioBytes = buffer.limit() - buffer.position();

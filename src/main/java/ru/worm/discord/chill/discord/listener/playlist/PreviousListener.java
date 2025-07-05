@@ -1,21 +1,22 @@
 package ru.worm.discord.chill.discord.listener.playlist;
 
-import discord4j.core.event.domain.message.MessageCreateEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.discord.Commands;
-import ru.worm.discord.chill.discord.listener.EventListener;
+import ru.worm.discord.chill.discord.listener.ITextCommand;
 import ru.worm.discord.chill.discord.listener.MessageListener;
 import ru.worm.discord.chill.queue.TrackQueue;
+
+import javax.annotation.Nonnull;
 
 /**
  * мотает на предыдущий трек
  */
 @Service
-public class PreviousListener extends MessageListener implements EventListener<MessageCreateEvent> {
+public class PreviousListener extends MessageListener implements ITextCommand {
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final TrackQueue playlist;
 
@@ -26,13 +27,10 @@ public class PreviousListener extends MessageListener implements EventListener<M
     }
 
     @Override
-    public Class<MessageCreateEvent> getEventType() {
-        return MessageCreateEvent.class;
-    }
-
-    public Mono<Void> execute(MessageCreateEvent event) {
-        return filter(event.getMessage())
-                .doOnNext(m -> playlist.previous())
-                .then();
+    public void onMessageReceived(@Nonnull MessageReceivedEvent event) {
+        if (!filter(event)) {
+            return;
+        }
+        playlist.previous();
     }
 }

@@ -67,13 +67,29 @@ public class CliOption {
         optUrlRequired = new Option("url", true, "url with youtube playlist");
         optUrlRequired.setRequired(true);
         urlAndShuffle.addOption(optUrlRequired);
-        shuffle = new Option("s", "shuffle", false, "will shuffle youtube playlist, before adding adding tracks to queue");
+        shuffle = new Option("s", "shuffle", false, "will shuffle youtube playlist, before adding tracks to queue");
         urlAndShuffle.addOption(shuffle);
     }
 
     public static final Options player;
     public static final Option optStop = new Option("s", "stop",false, "stop playing");
     public static final Option optStart = new Option("p", "play",false, "start playing");
+
+
+    public static final Options offAndPassword;
+    public static final Option off;
+    public static final Option password;
+
+    static {
+        offAndPassword = new Options();
+        off = new Option("off", false, "to disable locking");
+        off.setRequired(false);
+        offAndPassword.addOption(off);
+        password = new Option("p", "password", true, "password");
+        password.setRequired(true);
+        offAndPassword.addOption(password);
+    }
+
 
     static {
         player = new Options();

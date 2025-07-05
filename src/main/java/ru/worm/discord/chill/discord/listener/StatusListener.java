@@ -1,17 +1,16 @@
 package ru.worm.discord.chill.discord.listener;
 
-import discord4j.core.event.domain.message.MessageCreateEvent;
-import discord4j.core.object.entity.Message;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.discord.Commands;
 
+import javax.annotation.Nonnull;
 import java.time.Duration;
 import java.time.Instant;
 
 @Service
-public class StatusListener extends MessageListener implements EventListener<MessageCreateEvent> {
+public class StatusListener extends MessageListener implements ITextCommand {
     private final Instant launchTimestamp;
     private final BotLockListener lockListener;
 
@@ -22,23 +21,16 @@ public class StatusListener extends MessageListener implements EventListener<Mes
     }
 
     @Override
-    public Class<MessageCreateEvent> getEventType() {
-        return MessageCreateEvent.class;
+    public void onMessageReceived(@Nonnull MessageReceivedEvent event) {
+        if (!filter(event)) {
+            return;
+        }
+        String msg = """
+            Version: ???
+            Uptime: %s
+            """.formatted(uptime());
+        answer(event, msg);
     }
-
-    public Mono<Void> execute(MessageCreateEvent event) {
-        return filter(event.getMessage())
-                .flatMap(Message::getChannel)
-                .flatMap(channel -> {
-                    String msg = """
-                            Version: ???
-                            Uptime: %s
-                            """.formatted(uptime());
-                    return channel.createMessage(msg);
-                })
-                .then();
-    }
-
 
     private String uptime() {
         Duration uptime = Duration.between(launchTimestamp, Instant.now());

@@ -1,98 +1,120 @@
 package ru.worm.discord.chill.discord.listener;
 
-import discord4j.core.object.entity.Message;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.message.GenericMessageEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import reactor.core.publisher.Mono;
+import org.springframework.beans.factory.DisposableBean;
 import ru.worm.discord.chill.discord.GuildObserver;
 import ru.worm.discord.chill.discord.IWithPrefix;
+import ru.worm.discord.chill.discord.NotificationService;
+import ru.worm.discord.chill.logic.PoolConfig;
 import ru.worm.discord.chill.logic.command.CliOption;
 import ru.worm.discord.chill.logic.command.IOptionValidator;
 import ru.worm.discord.chill.util.Pair;
 import ru.worm.discord.chill.util.TextUtil;
 
 import java.util.Arrays;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
-public abstract class MessageListener implements IWithPrefix {
+public abstract class MessageListener extends ListenerAdapter implements IWithPrefix, DisposableBean {
     private final static DefaultParser parser = new DefaultParser();
     protected String botPrefix;
     protected String command;
 
-    public Mono<Message> filter(Message eventMessage) {
-        return Mono.just(eventMessage)
-                .filter(message -> message.getAuthor().map(user -> !user.isBot()).orElse(false))
-                .flatMap(message -> {
-                    String messageContent = message.getContent();
-                    if (TextUtil.isEmpty(messageContent)) {
-                        return Mono.empty();
-                    }
-                    String[] commandWords = messageContent.split(" ");
-                    if (!commandWords[0].equalsIgnoreCase(commandName())) {
-                        return Mono.empty();
-                    } else if (Arrays.stream(commandWords).anyMatch(s -> s.equalsIgnoreCase("-h") || s.equalsIgnoreCase("--help"))) {
-                        return eventMessage.getChannel()
-                                .flatMap(channel -> channel.createMessage(helpMessage()))
-                                .flatMap(response -> Mono.empty());
-                    } else {
-                        if (GuildObserver.isLockedToAnotherGuildId(message, command)) {
-                            return handleWrongGuildId(message).then(Mono.empty());
-                        }
-                        if (GuildObserver.modeMismatch(message)) {
-                            return Mono.empty();
-                        }
-                        return Mono.just(message);
-                    }
-                });
+
+    protected boolean filter(MessageReceivedEvent event) {
+        User author = event.getAuthor();
+        if (author.isBot()) {
+            return false;
+        }
+        net.dv8tion.jda.api.entities.Message message = event.getMessage();
+        String messageContent;
+        if (TextUtil.isEmpty(messageContent = message.getContentRaw())) {
+            return false;
+        }
+        String[] commandWords = messageContent.split(" ");
+        if (!commandWords[0].equalsIgnoreCase(commandName())) {
+            return false;
+        } else if (GuildObserver.modeMismatch(message.getGuildIdLong(), command)) {
+            return false;
+        } else if (Arrays.stream(commandWords).anyMatch(s -> s.equalsIgnoreCase("-h") || s.equalsIgnoreCase("--help"))) {
+            answer(event, helpMessage());
+            return false;
+        } else {
+            if (GuildObserver.isLockedToAnotherGuildId(message.getGuildIdLong(), command)) {
+                answer(event, "sorry, bot is locked to another guildId");
+                return false;
+            }
+            NotificationService.Companion.setChannelId(message.getChannelIdLong());
+            return true;
+        }
     }
 
-    protected Mono<Pair<Message, CommandLine>> filterWithOptions(Message eventMessage) {
-        return filter(eventMessage)
-                .flatMap(message -> {
-                    Options opts = options().getFirst();
-                    IOptionValidator val = options().getSecond();
-                    if (opts == null) {
-                        return Mono.error(new IllegalStateException("options filtering cannot be applied without implementing #options()"));
-                    }
-                    String messageContent = message.getContent();
-                    String[] commandWords = messageContent.split(" ");
-                    if (Arrays.stream(commandWords).anyMatch(s -> s.equalsIgnoreCase("-h") || s.equalsIgnoreCase("--help"))) {
-                        return eventMessage.getChannel()
-                                .flatMap(channel -> channel.createMessage(CliOption.help(commandName(), opts)))
-                                .flatMap(response -> Mono.empty());
-                    }
-                    try {
-                        CommandLine parse = parser.parse(opts,
-                                Arrays.copyOfRange(commandWords, 1, commandWords.length));
-                        if (val != null) val.validate(parse);
-                        if (GuildObserver.isLockedToAnotherGuildId(message, command)) {
-                            return handleWrongGuildId(message).then(Mono.empty());
-                        }
-                        if (GuildObserver.modeMismatch(message)) {
-                            return Mono.empty();
-                        }
-                        return Mono.just(new Pair<>(message, parse));
-                    } catch (ParseException e) {
-                        return Mono.error(e);
-                    }
-                })
-                .onErrorResume(throwable -> {
-                    if (throwable instanceof ParseException) {
-                        String err = "%s\n%s".formatted(throwable.getMessage(), CliOption.help(commandName(), options().getFirst()));
-                        return eventMessage.getChannel()
-                                .flatMap(channel -> channel.createMessage(err))
-                                .flatMap(response -> Mono.empty());
-                    } else {
-                        return Mono.error(throwable); // Handle other errors as needed
-                    }
-                });
+    protected Optional<CommandLine> filterWithOptions(MessageReceivedEvent event) {
+        if (!filter(event)) {
+            return Optional.empty();
+        }
+        User author = event.getAuthor();
+        if (author.isBot()) {
+            return Optional.empty();
+        }
+        Options opts = options().getFirst();
+        IOptionValidator val = options().getSecond();
+        if (opts == null) {
+            throw new IllegalStateException("options filtering cannot be applied without implementing #options()");
+        }
+        net.dv8tion.jda.api.entities.Message message = event.getMessage();
+        String messageContent;
+        if (TextUtil.isEmpty(messageContent = message.getContentRaw())) {
+            return Optional.empty();
+        }
+        String[] commandWords = messageContent.split(" ");
+        if (Arrays.stream(commandWords).anyMatch(s -> s.equalsIgnoreCase("-h") || s.equalsIgnoreCase("--help"))) {
+            answer(event, helpMessage());
+//            event.getChannel().sendMessage(helpMessage()).queue();
+            return Optional.empty();
+        }
+        try {
+            CommandLine parse = parser.parse(opts,
+                    Arrays.copyOfRange(commandWords, 1, commandWords.length));
+            if (val != null) val.validate(parse);
+            if (GuildObserver.isLockedToAnotherGuildId(message.getGuildIdLong(), command)) {
+                answer(event, "sorry, bot is locked to another guildId");
+                return Optional.empty();
+            }
+            if (GuildObserver.modeMismatch(message.getGuildIdLong(), command)) {
+                return Optional.empty();
+            }
+            NotificationService.Companion.setChannelId(message.getChannelIdLong());
+            return Optional.of(parse);
+        } catch (ParseException e) {
+            event.getChannel().sendMessage(e.getLocalizedMessage()).queue();
+            return Optional.empty();
+        }
     }
 
-    private Mono<Void> handleWrongGuildId(Message message) {
-        return message.getChannel()
-                .flatMap(channel -> channel.createMessage("sorry, bot is locked to another guildId"))
-                .then(Mono.empty());
+    protected void answer(GenericMessageEvent event, String text) {
+        String[] msgParts = TextUtil.splitMessage(text);
+        Arrays.stream(msgParts)
+            .forEach(msgPart -> event.getChannel()
+                .sendMessage(msgPart)
+                .queue());
+    }
+
+    protected <T> CompletableFuture<T> async(Supplier<T> supplier) {
+        return CompletableFuture.supplyAsync(supplier, PoolConfig.forEvents);
+    }
+
+    @Override
+    public void destroy() {
+        PoolConfig.forEvents.shutdown();
     }
 
     @Override
@@ -105,11 +127,11 @@ public abstract class MessageListener implements IWithPrefix {
         return botPrefix + this.command;
     }
 
-    protected Pair<Options, IOptionValidator> options() {
+    public Pair<Options, IOptionValidator> options() {
         return new Pair<>(null, null);
     }
 
-    private String helpMessage() {
+    protected String helpMessage() {
         Options opts = options().getFirst();
         String msg;
         if (opts != null) {

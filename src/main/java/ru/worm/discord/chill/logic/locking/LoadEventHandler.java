@@ -2,32 +2,33 @@ package ru.worm.discord.chill.logic.locking;
 
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.MonoSink;
+import ru.worm.discord.chill.logic.PoolConfig;
+import ru.worm.discord.chill.youtube.LoadResult;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @Service
 public class LoadEventHandler implements DisposableBean {
     private final Map<Integer, List<ILoadingAwaiter>> callbacks = new ConcurrentHashMap<>();
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService executor = PoolConfig.trackLoadWaiter;
 
     public void downloaded(Integer id) {
         List<ILoadingAwaiter> consumers = callbacks.remove(id);
         if (consumers != null && !consumers.isEmpty()) {
-            consumers.forEach(c -> c.dispatchState(TrackCashState.ready));
+            consumers.forEach(c -> c.dispatchState(TrackCashState.ready, null));
         }
     }
 
-    public void failedToLoad(Integer id) {
+    public void failedToLoad(Integer id, String msg) {
         List<ILoadingAwaiter> consumers = callbacks.remove(id);
         if (consumers != null && !consumers.isEmpty()) {
-            consumers.forEach(c -> c.dispatchState(TrackCashState.error));
+            consumers.forEach(c -> c.dispatchState(TrackCashState.error, msg));
         }
     }
 
@@ -35,38 +36,38 @@ public class LoadEventHandler implements DisposableBean {
     public void registerCallback(Integer id, ILoadingAwaiter subscriber) {
         List<ILoadingAwaiter> subscribers = callbacks.computeIfAbsent(id, i -> new ArrayList<>());
         subscribers.add(subscriber);
-        executor.schedule(() -> subscriber.dispatchState(TrackCashState.error), 32, TimeUnit.SECONDS);
+        executor.schedule(() -> subscriber.dispatchState(TrackCashState.error, "timeout!"), 32, TimeUnit.SECONDS);
     }
 
-    public static ILoadingAwaiter awaiter(FileCashLock id, MonoSink<Void> r) {
+    public static ILoadingAwaiter awaiter(FileCashLock id, CompletableFuture<LoadResult> r) {
         return new ILoadingAwaiter(id, r);
     }
 
     @Override
-    public void destroy() throws Exception {
+    public void destroy() {
         executor.shutdown();
     }
 
     public static class ILoadingAwaiter {
         private volatile boolean set = false;
         private final FileCashLock lock;
-        private final MonoSink<Void> r;
+        private CompletableFuture<LoadResult> r;
 
-        private ILoadingAwaiter(FileCashLock lock, MonoSink<Void> r) {
+        private ILoadingAwaiter(FileCashLock lock, CompletableFuture<LoadResult> r) {
             this.lock = lock;
             this.r = r;
         }
 
-        private void dispatchState(TrackCashState state) {
+        private void dispatchState(TrackCashState state, String msg) {
             synchronized (lock) {
                 if (set) {
                     return;
                 }
                 set = true;
                 if (state == TrackCashState.ready) {
-                    r.success();
+                    r.complete(LoadResult.success());
                 } else {
-                    r.error(new RuntimeException("couldn't load ***"));
+                    r.complete(LoadResult.err("was waiting for previously initiated loading and got: '" + msg + "'"));
                 }
             }
         }

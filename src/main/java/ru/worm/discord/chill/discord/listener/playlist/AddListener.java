@@ -1,28 +1,28 @@
 package ru.worm.discord.chill.discord.listener.playlist;
 
-import discord4j.core.event.domain.message.MessageCreateEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.discord.Commands;
-import ru.worm.discord.chill.discord.listener.EventListener;
+import ru.worm.discord.chill.discord.listener.ITextCommand;
 import ru.worm.discord.chill.discord.listener.MessageListener;
 import ru.worm.discord.chill.logic.command.CliOption;
 import ru.worm.discord.chill.logic.command.CliOptionValidation;
 import ru.worm.discord.chill.logic.command.IOptionValidator;
 import ru.worm.discord.chill.queue.TrackFactory;
 import ru.worm.discord.chill.queue.TrackQueue;
+import ru.worm.discord.chill.util.AsyncUtil;
 import ru.worm.discord.chill.util.Pair;
+
+import javax.annotation.Nonnull;
 
 /**
  * добавляет в playlist следующий youtube трек
  */
 @Service
-public class AddListener extends MessageListener implements EventListener<MessageCreateEvent> {
-    private final Logger log = LoggerFactory.getLogger(getClass());
+public class AddListener extends MessageListener implements ITextCommand {
     private final TrackQueue playlist;
     private final TrackFactory trackFactory;
 
@@ -34,20 +34,28 @@ public class AddListener extends MessageListener implements EventListener<Messag
     }
 
     @Override
-    public Class<MessageCreateEvent> getEventType() {
-        return MessageCreateEvent.class;
-    }
+    public void onMessageReceived(@Nonnull MessageReceivedEvent event) {
+        CommandLine command = filterWithOptions(event).orElse(null);
+        if (command == null) return;
+        String youtubeUrl = command.getArgList().get(0);
 
-    public Mono<Void> execute(MessageCreateEvent event) {
-        return filterWithOptions(event.getMessage())
-                .map(p -> p.getSecond().getArgList().get(0))
-                .flatMap(trackFactory::newTrack)
-                .doOnNext(playlist::add)
-                .then();
+        async(() -> trackFactory.obtainTrack(youtubeUrl))
+            .thenAccept(track ->
+                track.ifPresentOrElse(playlist::add, () -> {
+                    String err = "had trouble loading the %s".formatted(youtubeUrl);
+                    answer(event, err);
+                }))
+            .exceptionally(AsyncUtil.logError())
+        ;
     }
 
     @Override
-    protected Pair<Options, IOptionValidator> options() {
+    protected String helpMessage() {
+        return "usage: `!add https://www.youtube.com/watch?...`\n";
+    }
+
+    @Override
+    public Pair<Options, IOptionValidator> options() {
         return new Pair<>(CliOption.emptyOptions, CliOptionValidation.youtubeLink);
     }
 }

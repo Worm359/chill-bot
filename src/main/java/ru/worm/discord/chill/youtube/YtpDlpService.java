@@ -4,14 +4,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
 import ru.worm.discord.chill.config.settings.RootSettings;
 import ru.worm.discord.chill.config.settings.YoutubeSetting;
+import ru.worm.discord.chill.logic.PoolConfig;
 import ru.worm.discord.chill.logic.locking.FileCashLock;
 import ru.worm.discord.chill.logic.locking.LoadEventHandler;
 import ru.worm.discord.chill.logic.locking.TrackCashState;
 import ru.worm.discord.chill.logic.locking.TrackLoadLocker;
 import ru.worm.discord.chill.queue.Track;
+import ru.worm.discord.chill.util.CommandLineLoggerV2;
+import ru.worm.discord.chill.util.ExceptionUtils;
 import ru.worm.discord.chill.util.YoutubeUtil;
 
 import java.io.IOException;
@@ -21,6 +23,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static ru.worm.discord.chill.logic.AudioFilePath.trackFile;
+import static ru.worm.discord.chill.youtube.LoadResult.err;
+import static ru.worm.discord.chill.youtube.LoadResult.success;
 
 @Component
 public class YtpDlpService {
@@ -38,71 +42,96 @@ public class YtpDlpService {
         this.settings = settings.getYoutube();
     }
 
-    public Mono<Void> loadAudio(Track ytTrack) {
-        return Mono.create(sink -> {
-            FileCashLock trackLock = locker.getLock(ytTrack.getId());
-            Consumer<String> processError = (msg) -> {
-                synchronized (trackLock) {
-                    trackLock.error();
-                    loadingEventMng.failedToLoad(ytTrack.getId());
-                }
-                sink.error(new RuntimeException(msg));
-            };
-            try {
-                synchronized (trackLock) {
-                    //why: later, tracks will be loaded before the play event occurs.
-                    //so, currentTrack -> load can happen when the track is already loading.
-                    //to not lose the player.play callback on a loaded track, we should await it, if loading.
-                    TrackCashState state = trackLock.getState();
-                    if (state == TrackCashState.ready) {
-                        sink.success();
-                        return;
-                    } else if (state == TrackCashState.loading) {
-                        LoadEventHandler.ILoadingAwaiter callback = LoadEventHandler.awaiter(trackLock, sink);
-                        loadingEventMng.registerCallback(ytTrack.getId(), callback);
-                        return;
-                    } else if (state == TrackCashState.error || state == TrackCashState.deleted) {
-                        sink.error(new RuntimeException("couldn't load " + ytTrack));
-                        return;
-                    } else if (state == TrackCashState.idle) {
-                        trackLock.loading();
+    public CompletableFuture<LoadResult> loadAudio(Track ytTrack) {
+        CompletableFuture<LoadResult> result = new CompletableFuture<>();
+        FileCashLock trackLock = locker.getLock(ytTrack.getId());
+        Consumer<String> processError = (msg) -> {
+            synchronized (trackLock) {
+                trackLock.error();
+                loadingEventMng.failedToLoad(ytTrack.getId(), msg);
+            }
+        };
+        try {
+            synchronized (trackLock) {
+                //why: later, tracks will be loaded before the play event occurs.
+                //so, currentTrack -> load can happen when the track is already loading.
+                //to not lose the player.play callback on a loaded track, we should await it, if loading.
+                TrackCashState state = trackLock.getState();
+                if (state == TrackCashState.ready) {
+                    return CompletableFuture.completedFuture(new LoadResult());
+                } else if (state == TrackCashState.loading) {
+                    LoadEventHandler.ILoadingAwaiter callback = LoadEventHandler.awaiter(trackLock, result);
+                    loadingEventMng.registerCallback(ytTrack.getId(), callback);
+                    return result;
+                } else if (state == TrackCashState.error) {
+                    return CompletableFuture.completedFuture(err(
+                        "previously encountered an error for this track, not gonna make the same mistake."
+                    ));
+                } else if (state == TrackCashState.deleted) {
+                    return CompletableFuture.completedFuture(err(
+                        "somehow have managed to get 'deleted' track lock. could try again next time."
+                    ));
+                } else {
+                    if (state != TrackCashState.idle) {
+                        processError.accept("unknown track state " + state);
+                        return CompletableFuture.completedFuture(err(
+                            "unknown track state " + state
+                        ));
                     }
+                    trackLock.loading();
                 }
-                //video duration check
+            }
+
+            //video duration check
+            {
                 Optional<String> err = checkDuration(ytTrack);
                 if (err.isPresent()) {
                     processError.accept(err.get());
-                    return;
+                    return CompletableFuture.completedFuture(err(
+                        err.get()
+                    ));
                 }
-                //process building
-                ProcessBuilder pb = new ProcessBuilder(settings.getYtpDlpBin(),
-                        "-x",
-                        "-o", trackFile(ytTrack),
-                        "--no-playlist",
-                        YoutubeUtil.urlForVideoId(ytTrack.getVideoId()));
-                pb.inheritIO();
-                Process ytpDlpProcess = pb.start();
-                //process -> future
-                CompletableFuture<Process> future = ytpDlpProcess.onExit();
-                future.completeOnTimeout(ytpDlpProcess, 30, TimeUnit.SECONDS);
-                //process callbacks
-                future.whenComplete((process, throwable) -> {
-                    synchronized (trackLock) {
-                        if (process != null && !process.isAlive() && process.exitValue() == 0) {
-                            //lock#timeRequested was just updated. no need to check deleted state
-                            trackLock.ready();
-                            loadingEventMng.downloaded(ytTrack.getId());
-                            sink.success();
-                        } else {
-                            //lock#timeRequested was just updated. no need to check deleted state
-                            processError.accept("couldn't load " + ytTrack);
-                        }
-                    }
-                });
-            } catch (IOException e) {
-                processError.accept(e.getMessage());
             }
-        });
+
+            //process building
+            Process ytpDlpProcess = new ProcessBuilder(settings.getYtpDlpBin(),
+                    "-x",
+                    "-o", trackFile(ytTrack),
+                    "--audio-format", "opus",
+                    "--no-playlist",
+                    YoutubeUtil.urlForVideoId(ytTrack.getVideoId()))
+                .redirectErrorStream(true)
+                .start();
+            CommandLineLoggerV2 cll = new CommandLineLoggerV2(ytpDlpProcess.getInputStream());
+            cll.setIdentifier("(%d) %s".formatted(ytTrack.getId(), ytTrack.getTitle()));
+            cll.log(PoolConfig.processOutputLogger);
+            //process -> future
+            CompletableFuture<Process> future = ytpDlpProcess.onExit();
+            future.completeOnTimeout(ytpDlpProcess, 30, TimeUnit.SECONDS);
+            //process callbacks
+            future.whenComplete((process, throwable) -> {
+                synchronized (trackLock) {
+                    if (process != null && !process.isAlive() && process.exitValue() == 0) {
+                        //lock#timeRequested was just updated. no need to check deleted state
+                        trackLock.ready();
+                        loadingEventMng.downloaded(ytTrack.getId());
+                        result.complete(success());
+                    } else {
+                        //lock#timeRequested was just updated. no need to check deleted state
+                        String err = "couldn't load " + ytTrack;
+                        processError.accept(err);
+                        result.complete(err(err));
+                        killProcess(ytpDlpProcess);
+                    }
+                }
+            });
+            return result;
+        } catch (IOException e) {
+            processError.accept(e.getMessage());
+            return CompletableFuture.completedFuture(err(
+                e.getMessage() != null ? e.getMessage() : "[no error description]"
+            ));
+        }
     }
 
     private Optional<String> checkDuration(Track ytTrack) {
@@ -119,5 +148,18 @@ public class YtpDlpService {
             log.debug("{} duration check OK.", ytTrack);
             return Optional.empty();
         }
+    }
+
+    private void killProcess(Process process) {
+        process.destroy();
+        PoolConfig.trackLoadWaiter.schedule(() -> {
+            try {
+                if (process.isAlive()) {
+                    process.destroyForcibly();
+                }
+            } catch (Throwable e) {
+                log.error("{}", ExceptionUtils.getStackTrace(e));
+            }
+        }, 5, TimeUnit.SECONDS);
     }
 }

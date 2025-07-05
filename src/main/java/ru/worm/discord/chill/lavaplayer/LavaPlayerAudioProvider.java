@@ -1,39 +1,45 @@
 package ru.worm.discord.chill.lavaplayer;
 
-import com.sedmelluq.discord.lavaplayer.format.StandardAudioDataFormats;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.track.playback.MutableAudioFrame;
-import discord4j.voice.AudioProvider;
+import net.dv8tion.jda.api.audio.AudioSendHandler;
 
+import javax.annotation.Nullable;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
-public final class LavaPlayerAudioProvider extends AudioProvider {
 
-    private final AudioPlayer player;
-    private final MutableAudioFrame frame = new MutableAudioFrame();
+/**
+ * from lavaplayer examples
+ */
+//@Component
+public class LavaPlayerAudioProvider implements AudioSendHandler {
+    private final AudioPlayer audioPlayer;
+    private final ByteBuffer buffer;
+    private final MutableAudioFrame frame;
 
-    public LavaPlayerAudioProvider(final AudioPlayer player) {
-        // Allocate a ByteBuffer for Discord4J's AudioProvider to hold audio data
-        // for Discord
-        super(
-            ByteBuffer.allocate(
-                StandardAudioDataFormats.DISCORD_OPUS.maximumChunkSize()
-            )
-        );
-        // Set LavaPlayer's MutableAudioFrame to use the same buffer as the one we
-        // just allocated
-        frame.setBuffer(getBuffer());
-        this.player = player;
+    public LavaPlayerAudioProvider(AudioPlayer player) {
+        this.audioPlayer = player;
+        this.buffer = ByteBuffer.allocate(1024);
+        this.frame = new MutableAudioFrame();
+        this.frame.setBuffer(buffer);
     }
 
     @Override
-    public boolean provide() {
-        // AudioPlayer writes audio data to its AudioFrame
-        final boolean didProvide = player.provide(frame);
-        // If audio was provided, flip from write-mode to read-mode
-        if (didProvide) {
-            getBuffer().flip();
-        }
-        return didProvide;
+    public boolean canProvide() {
+        return audioPlayer.provide(frame);
+    }
+
+
+    @Nullable
+    @Override
+    public ByteBuffer provide20MsAudio() {
+        ((Buffer) buffer).flip();
+        return buffer;
+    }
+
+    @Override
+    public boolean isOpus() {
+        return true;
     }
 }

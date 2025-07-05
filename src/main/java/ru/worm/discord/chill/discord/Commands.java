@@ -8,8 +8,9 @@ public interface Commands {
     public static String PREV = "prev";
     public static String ADD = "add";
     public static String GET_HISTORY = "hist";
-    public static String GET_PLAYING = "list";
-    public static String GET_MERGED_PLAYLIST = "list_all";
+    public static String GET_PLAYING = "queue";
+    public static String GET_MERGED_PLAYLIST = "list";
+    public static String GET_CURRENT = "now";
     public static String PLAY_NEXT = "play_next";
     public static String PLAY_NOW = "play_now";
     public static String PLAYLIST = "playlist";
@@ -21,5 +22,6 @@ public interface Commands {
     public static String JOIN = "join"; //todo automatically join when playing something...
     public static String STAT = "status";
     public static String LOCK = "lock";
+    public static String CLEANUP_DIALOGUE = "clean";
     public static String DEV = "dev";
 }
